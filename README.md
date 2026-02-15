@@ -15,7 +15,7 @@ Store: http://localhost:3000
 Admin: http://localhost:3000/admin
 4. Admin Login
 Username: sam@jersivo007
-Password: stg@jer@2009*#
+Password: [ contact owner for password (Instagram - @_sambitgope) ]
 Deploy to Render
 Step 1: Push to GitHub
 git init
