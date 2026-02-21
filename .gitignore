@@ -1,26 +1,32 @@
+# Environment variables (contains secrets!)
+.env
+
+# Google Service Account credentials (contains API keys!)
+google-service-account.json
+
 # Dependencies
 node_modules/
-package-lock.json
-
-# Database
-*.db
-*.db-journal
-
-# Environment variables
-.env
-.env.local
 
 # Logs
-logs/
 *.log
 npm-debug.log*
 
-# OS files
+# Database files (if local testing)
+*.db
+*.sqlite
+*.sqlite3
+
+# Operating System files
 .DS_Store
 Thumbs.db
 
-# IDE
+# Editor files
 .vscode/
 .idea/
 *.swp
-*.swo km
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
