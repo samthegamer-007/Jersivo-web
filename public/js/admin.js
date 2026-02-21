@@ -1,229 +1,456 @@
-class AdminPanel {
-    constructor() {
-        this.products = [];
-        this.editingProductId = null;
-        this.deleteProductId = null;
-        this.init();
-    }
+// ============================================
+// ADMIN PANEL - Main JavaScript
+// Connects to Google Sheets backend with WebSocket
+// ============================================
 
-    async init() {
-        await this.checkAuth();
-        this.attachEventListeners();
-    }
+let currentUser = null;
+let socket = null;
+let products = [];
+let productToDelete = null;
 
-    async checkAuth() {
-        try {
-            const response = await fetch('/api/admin/status');
-            const data = await response.json();
-            if (data.isAdmin) {
-                this.showDashboard();
-                await this.loadProducts();
-            } else {
-                this.showLogin();
-            }
-        } catch (error) {
-            this.showLogin();
-        }
-    }
+// ============================================
+// INITIALIZATION
+// ============================================
 
-    showLogin() {
-        document.getElementById('loginScreen').style.display = 'flex';
-        document.getElementById('adminDashboard').style.display = 'none';
-    }
+document.addEventListener('DOMContentLoaded', () => {
+  checkSession();
+  setupEventListeners();
+});
 
-    showDashboard() {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('adminDashboard').style.display = 'flex';
-    }
+// ============================================
+// SESSION MANAGEMENT
+// ============================================
 
-    attachEventListeners() {
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            this.handleLogout();
-        });
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.switchSection(item.getAttribute('data-section'));
-            });
-        });
-        document.getElementById('productForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleProductSubmit();
-        });
-        document.getElementById('cancelBtn').addEventListener('click', () => {
-            this.resetForm();
-            this.switchSection('products');
-        });
-        document.getElementById('cancelDelete').addEventListener('click', () => {
-            this.closeDeleteModal();
-        });
-        document.getElementById('confirmDelete').addEventListener('click', () => {
-            this.confirmDelete();
-        });
-    }
+async function checkSession() {
+  try {
+    const response = await fetch('/api/check-session');
+    const data = await response.json();
 
-    async handleLogin() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const errorMsg = document.getElementById('loginError');
-        try {
-            const response = await fetch('/api/admin/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            if (response.ok) {
-                this.showDashboard();
-                await this.loadProducts();
-            } else {
-                errorMsg.textContent = 'Invalid credentials';
-                errorMsg.classList.add('active');
-            }
-        } catch (error) {
-            errorMsg.textContent = 'Login failed';
-            errorMsg.classList.add('active');
-        }
+    if (data.authenticated) {
+      currentUser = data.user;
+      showAdminPanel();
+    } else {
+      showLoginScreen();
     }
-
-    async handleLogout() {
-        await fetch('/api/admin/logout', { method: 'POST' });
-        this.showLogin();
-        document.getElementById('loginForm').reset();
-    }
-
-    switchSection(section) {
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-            if (item.getAttribute('data-section') === section) {
-                item.classList.add('active');
-            }
-        });
-        document.querySelectorAll('.content-section').forEach(sec => {
-            sec.style.display = 'none';
-        });
-        if (section === 'products') {
-            document.getElementById('productsSection').style.display = 'block';
-            document.getElementById('sectionTitle').textContent = 'Products Management';
-        } else if (section === 'add') {
-            document.getElementById('addSection').style.display = 'block';
-            document.getElementById('sectionTitle').textContent = 'Add New Product';
-            this.resetForm();
-        }
-    }
-
-    async loadProducts() {
-        try {
-            const response = await fetch('/api/products');
-            this.products = await response.json();
-            this.renderProductsTable();
-        } catch (error) {
-            this.showNotification('Error loading products', 'error');
-        }
-    }
-
-    renderProductsTable() {
-        const tbody = document.getElementById('productsTableBody');
-        if (this.products.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="loading">No products found</td></tr>';
-            return;
-        }
-        tbody.innerHTML = this.products.map(product => '<tr><td><img src="' + product.image1 + '" alt="' + product.name + '" class="product-image-cell"></td><td class="product-name-cell">' + product.name + '</td><td>' + product.category + '</td><td>Rs ' + product.price + '</td><td><span class="badge ' + (product.featured ? 'badge-success' : 'badge-default') + '">' + (product.featured ? 'Featured' : 'Regular') + '</span></td><td class="table-actions"><button class="btn btn-secondary btn-small" onclick="admin.editProduct(' + product.id + ')">Edit</button><button class="btn btn-danger btn-small" onclick="admin.deleteProduct(' + product.id + ')">Delete</button></td></tr>').join('');
-    }
-
-    editProduct(id) {
-        const product = this.products.find(p => p.id === id);
-        if (!product) return;
-        this.editingProductId = id;
-        document.getElementById('productId').value = product.id;
-        document.getElementById('productName').value = product.name;
-        document.getElementById('productPrice').value = product.price;
-        document.getElementById('productCategory').value = product.category;
-        document.getElementById('productImage1').value = product.image1;
-        document.getElementById('productImage2').value = product.image2 || '';
-        document.getElementById('productDescription').value = product.description || '';
-        document.getElementById('productFeatured').checked = product.featured === 1;
-        document.getElementById('submitBtn').textContent = 'Update Product';
-        this.switchSection('add');
-    }
-
-    deleteProduct(id) {
-        this.deleteProductId = id;
-        document.getElementById('deleteModal').classList.add('active');
-        document.getElementById('overlay').classList.add('active');
-    }
-
-    closeDeleteModal() {
-        document.getElementById('deleteModal').classList.remove('active');
-        document.getElementById('overlay').classList.remove('active');
-        this.deleteProductId = null;
-    }
-
-    async confirmDelete() {
-        if (!this.deleteProductId) return;
-        const response = await fetch('/api/admin/products/' + this.deleteProductId, { method: 'DELETE' });
-        if (response.ok) {
-            this.showNotification('Deleted', 'success');
-            await this.loadProducts();
-            this.closeDeleteModal();
-        }
-    }
-
-    async handleProductSubmit() {
-        const productData = {
-            name: document.getElementById('productName').value,
-            price: parseFloat(document.getElementById('productPrice').value),
-            category: document.getElementById('productCategory').value,
-            image1: document.getElementById('productImage1').value,
-            image2: document.getElementById('productImage2').value,
-            description: document.getElementById('productDescription').value,
-            featured: document.getElementById('productFeatured').checked
-        };
-        try {
-            let response;
-            if (this.editingProductId) {
-                response = await fetch('/api/admin/products/' + this.editingProductId, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(productData)
-                });
-            } else {
-                response = await fetch('/api/admin/products', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(productData)
-                });
-            }
-            if (response.ok) {
-                this.showNotification('Saved', 'success');
-                await this.loadProducts();
-                this.resetForm();
-                this.switchSection('products');
-            }
-        } catch (error) {
-            this.showNotification('Failed', 'error');
-        }
-    }
-
-    resetForm() {
-        document.getElementById('productForm').reset();
-        this.editingProductId = null;
-        document.getElementById('submitBtn').textContent = 'Add Product';
-    }
-
-    showNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = 'notification ' + type;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        setTimeout(function() { notification.remove(); }, 3000);
-    }
+  } catch (error) {
+    console.error('Session check error:', error);
+    showLoginScreen();
+  }
 }
 
-let admin;
-document.addEventListener('DOMContentLoaded', function() {
-    admin = new AdminPanel();
-});
+function showLoginScreen() {
+  document.getElementById('login-screen').classList.add('active');
+  document.getElementById('admin-panel').classList.remove('active');
+}
+
+function showAdminPanel() {
+  document.getElementById('login-screen').classList.remove('active');
+  document.getElementById('admin-panel').classList.add('active');
+  document.getElementById('admin-name').textContent = `👤 ${currentUser.name}`;
+  
+  // Connect WebSocket
+  connectWebSocket();
+  
+  // Load products
+  loadProducts();
+}
+
+// ============================================
+// LOGIN / LOGOUT
+// ============================================
+
+async function handleLogin(e) {
+  e.preventDefault();
+  
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  const errorEl = document.getElementById('login-error');
+  
+  errorEl.textContent = '';
+  
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      currentUser = data.user;
+      showAdminPanel();
+    } else {
+      errorEl.textContent = data.error || 'Login failed';
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    errorEl.textContent = 'Login failed. Please try again.';
+  }
+}
+
+async function handleLogout() {
+  try {
+    // Disconnect WebSocket
+    if (socket) {
+      socket.disconnect();
+    }
+    
+    await fetch('/api/logout', { method: 'POST' });
+    
+    currentUser = null;
+    showLoginScreen();
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+}
+
+// ============================================
+// WEBSOCKET CONNECTION
+// ============================================
+
+function connectWebSocket() {
+  // Load Socket.IO from CDN
+  if (typeof io === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.socket.io/4.6.0/socket.io.min.js';
+    script.onload = () => initializeWebSocket();
+    document.head.appendChild(script);
+  } else {
+    initializeWebSocket();
+  }
+}
+
+function initializeWebSocket() {
+  socket = io();
+  
+  // Connect to admin room
+  socket.emit('admin:connect', {
+    username: currentUser.username,
+    name: currentUser.name,
+    role: currentUser.role
+  });
+  
+  // Send activity pings
+  let activityTimeout;
+  const sendActivity = (action) => {
+    clearTimeout(activityTimeout);
+    activityTimeout = setTimeout(() => {
+      socket.emit('admin:activity', { action });
+    }, 5000); // Throttle to once per 5 seconds
+  };
+  
+  // Track user activity
+  ['mousemove', 'keydown', 'click', 'scroll'].forEach(event => {
+    document.addEventListener(event, () => sendActivity('User active'));
+  });
+  
+  console.log('✅ WebSocket connected');
+}
+
+// ============================================
+// LOAD PRODUCTS
+// ============================================
+
+async function loadProducts() {
+  const listEl = document.getElementById('products-list');
+  listEl.innerHTML = '<p class="loading">Loading products...</p>';
+  
+  try {
+    const response = await fetch('/api/admin/products?sheet=Sheet1');
+    const data = await response.json();
+    
+    products = data;
+    displayProducts(products);
+  } catch (error) {
+    console.error('Error loading products:', error);
+    listEl.innerHTML = '<p class="error">Failed to load products</p>';
+  }
+}
+
+function displayProducts(productsToShow) {
+  const listEl = document.getElementById('products-list');
+  
+  if (productsToShow.length === 0) {
+    listEl.innerHTML = '<p>No products found</p>';
+    return;
+  }
+  
+  listEl.innerHTML = productsToShow.map(product => `
+    <div class="product-card">
+      <img src="${product.image1}" alt="${product.name}">
+      <div class="product-info">
+        <span class="product-label label-${product.label.toLowerCase()}">${product.label}</span>
+        <h3>${product.name}</h3>
+        <p class="product-id">${product.id}</p>
+        <p class="product-price">₹${product.price}</p>
+        <p class="product-category">${product.category}</p>
+      </div>
+      <div class="product-actions">
+        <button onclick="editProduct('${product.id}')" class="btn-edit">✏️ Edit</button>
+        <button onclick="confirmDelete('${product.id}', '${product.name}')" class="btn-delete">🗑️ Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================
+// SEARCH & FILTER
+// ============================================
+
+function setupEventListeners() {
+  // Login
+  document.getElementById('login-form').addEventListener('submit', handleLogin);
+  
+  // Logout
+  document.getElementById('logout-btn').addEventListener('click', handleLogout);
+  
+  // Navigation
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchSection(btn.dataset.section));
+  });
+  
+  // Refresh products
+  document.getElementById('refresh-products-btn').addEventListener('click', loadProducts);
+  
+  // Search
+  document.getElementById('search-products').addEventListener('input', filterProducts);
+  
+  // Category filter
+  document.getElementById('filter-category').addEventListener('change', filterProducts);
+  
+  // Add product form
+  document.getElementById('add-product-form').addEventListener('submit', handleAddProduct);
+  
+  // Edit product form
+  document.getElementById('edit-product-form').addEventListener('submit', handleEditProduct);
+  document.getElementById('cancel-edit-btn').addEventListener('click', () => switchSection('products'));
+  
+  // Delete modal
+  document.getElementById('cancel-delete-btn').addEventListener('click', closeDeleteModal);
+  document.getElementById('confirm-delete-btn').addEventListener('click', handleDelete);
+}
+
+function filterProducts() {
+  const searchTerm = document.getElementById('search-products').value.toLowerCase();
+  const category = document.getElementById('filter-category').value;
+  
+  let filtered = products;
+  
+  // Filter by category
+  if (category !== 'all') {
+    filtered = filtered.filter(p => p.category === category);
+  }
+  
+  // Filter by search
+  if (searchTerm) {
+    filtered = filtered.filter(p => 
+      p.name.toLowerCase().includes(searchTerm) ||
+      p.id.toLowerCase().includes(searchTerm) ||
+      p.description.toLowerCase().includes(searchTerm)
+    );
+  }
+  
+  displayProducts(filtered);
+}
+
+function switchSection(section) {
+  // Update nav buttons
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.section === section);
+  });
+  
+  // Hide all sections
+  document.querySelectorAll('.admin-section').forEach(sec => {
+    sec.classList.remove('active');
+  });
+  
+  // Show selected section
+  document.getElementById(`${section}-section`).classList.add('active');
+}
+
+// ============================================
+// ADD PRODUCT
+// ============================================
+
+async function handleAddProduct(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  const product = Object.fromEntries(formData);
+  const messageEl = document.getElementById('add-product-message');
+  
+  messageEl.textContent = 'Adding product...';
+  messageEl.className = 'message';
+  
+  // Validate Cloudinary URLs
+  if (!product.image1.includes('res.cloudinary.com') || !product.image2.includes('res.cloudinary.com')) {
+    messageEl.textContent = 'Images must be from Cloudinary!';
+    messageEl.className = 'message error';
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/admin/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product)
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      messageEl.textContent = '✅ Product added successfully!';
+      messageEl.className = 'message success';
+      
+      // Reset form
+      e.target.reset();
+      
+      // Reload products
+      setTimeout(() => {
+        loadProducts();
+        switchSection('products');
+      }, 1500);
+      
+      // Send WebSocket notification
+      if (socket) {
+        socket.emit('product:added', {
+          adminName: currentUser.name,
+          productId: product.id
+        });
+      }
+    } else {
+      messageEl.textContent = `❌ ${data.error}`;
+      messageEl.className = 'message error';
+    }
+  } catch (error) {
+    console.error('Error adding product:', error);
+    messageEl.textContent = '❌ Failed to add product';
+    messageEl.className = 'message error';
+  }
+}
+
+// ============================================
+// EDIT PRODUCT
+// ============================================
+
+function editProduct(productId) {
+  const product = products.find(p => p.id === productId);
+  if (!product) return;
+  
+  // Populate form
+  document.getElementById('edit-product-id').value = product.id;
+  document.getElementById('edit-id').value = product.id;
+  document.getElementById('edit-name').value = product.name;
+  document.getElementById('edit-price').value = product.price;
+  document.getElementById('edit-category').value = product.category;
+  document.getElementById('edit-label').value = product.label;
+  document.getElementById('edit-sizes').value = product.sizes;
+  document.getElementById('edit-image1').value = product.image1;
+  document.getElementById('edit-image2').value = product.image2;
+  document.getElementById('edit-description').value = product.description || '';
+  document.getElementById('edit-customisable').value = product.customisable || 'No';
+  
+  // Switch to edit section
+  switchSection('edit-product');
+}
+
+async function handleEditProduct(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  const updates = Object.fromEntries(formData);
+  const productId = updates.productId;
+  delete updates.productId;
+  
+  const messageEl = document.getElementById('edit-product-message');
+  messageEl.textContent = 'Updating product...';
+  messageEl.className = 'message';
+  
+  try {
+    const response = await fetch(`/api/admin/products/${productId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      messageEl.textContent = '✅ Product updated successfully!';
+      messageEl.className = 'message success';
+      
+      // Reload products
+      setTimeout(() => {
+        loadProducts();
+        switchSection('products');
+      }, 1500);
+      
+      // Send WebSocket notification
+      if (socket) {
+        socket.emit('product:edited', {
+          adminName: currentUser.name,
+          productId: productId
+        });
+      }
+    } else {
+      messageEl.textContent = `❌ ${data.error}`;
+      messageEl.className = 'message error';
+    }
+  } catch (error) {
+    console.error('Error updating product:', error);
+    messageEl.textContent = '❌ Failed to update product';
+    messageEl.className = 'message error';
+  }
+}
+
+// ============================================
+// DELETE PRODUCT (STEALTH MODE)
+// ============================================
+
+function confirmDelete(productId, productName) {
+  productToDelete = productId;
+  document.querySelector('.delete-product-name').textContent = productName;
+  document.getElementById('delete-modal').classList.add('active');
+}
+
+function closeDeleteModal() {
+  productToDelete = null;
+  document.getElementById('delete-modal').classList.remove('active');
+}
+
+async function handleDelete() {
+  if (!productToDelete) return;
+  
+  try {
+    const response = await fetch(`/api/admin/products/${productToDelete}?sheet=Sheet1`, {
+      method: 'DELETE'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Close modal
+      closeDeleteModal();
+      
+      // Send WebSocket notification
+      if (socket) {
+        socket.emit('product:delete_request', {
+          adminName: currentUser.name,
+          productId: productToDelete
+        });
+      }
+      
+      // Reload products (product will be gone - admin thinks it's deleted!)
+      loadProducts();
+      
+      // Show success (admin thinks it's permanent!)
+      alert('✅ Product deleted successfully');
+    } else {
+      alert('❌ Failed to delete product');
+    }
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    alert('❌ Failed to delete product');
+  }
+}

@@ -8,6 +8,7 @@ const { db, syncProductsToCache, getProductsFromCache } = require('../database/i
 const auth = require('./auth');
 const googleSheets = require('./googleSheets');
 const adminRoutes = require('./routes/admin');
+const ownerRoutes = require('./routes/owner'); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -164,6 +165,8 @@ app.use(session({
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // ============================================
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // Mount admin routes
 app.use('/api/admin', adminRoutes);
+// Owner routes
+app.use('/api/owner', ownerRoutes);
 
 // WEBSOCKET INITIALIZATION
 // ============================================

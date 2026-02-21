@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jersivo Owner Panel</title>
+    <link rel="stylesheet" href="/css/owner.css">
+</head>
+<body>
+    <div id="owner-container">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen active">
+            <div class="login-box">
+                <h1>👑 Jersivo Owner Panel</h1>
+                <p class="login-subtitle">God Mode Access</p>
+                <form id="login-form">
+                    <input type="text" id="username" placeholder="Owner Username" required>
+                    <input type="password" id="password" placeholder="Password" required>
+                    <button type="submit">Login as Owner</button>
+                    <p id="login-error" class="error"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Owner Panel -->
+        <div id="owner-panel" class="screen">
+            <!-- Header -->
+            <header class="owner-header">
+                <h1>👑 Owner Control Center</h1>
+                <div class="header-right">
+                    <span id="owner-name">Loading...</span>
+                    <button id="logout-btn" class="btn-secondary">Logout</button>
+                </div>
+            </header>
+
+            <!-- Navigation -->
+            <nav class="owner-nav">
+                <button class="nav-btn active" data-section="dashboard">
+                    📊 Dashboard
+                </button>
+                <button class="nav-btn" data-section="delete-requests">
+                    🗑️ Delete Requests <span id="delete-badge" class="badge">0</span>
+                </button>
+                <button class="nav-btn" data-section="admins">
+                    👥 Manage Admins
+                </button>
+                <button class="nav-btn" data-section="logs">
+                    📋 Audit Logs
+                </button>
+            </nav>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="owner-section active">
+                <h2>📊 Real-Time Admin Activity</h2>
+                
+                <div id="admin-status-list" class="status-grid">
+                    <p class="loading">Loading admin statuses...</p>
+                </div>
+
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <h3>Pending Deletes</h3>
+                        <p class="stat-number" id="stat-deletes">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Admins</h3>
+                        <p class="stat-number" id="stat-active-admins">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Admins</h3>
+                        <p class="stat-number" id="stat-total-admins">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Delete Requests Section -->
+            <section id="delete-requests-section" class="owner-section">
+                <div class="section-header">
+                    <h2>🗑️ Delete Requests</h2>
+                    <button id="refresh-deletes-btn" class="btn-primary">🔄 Refresh</button>
+                </div>
+
+                <div id="delete-requests-list" class="requests-grid">
+                    <p class="loading">Loading delete requests...</p>
+                </div>
+            </section>
+
+            <!-- Manage Admins Section -->
+            <section id="admins-section" class="owner-section">
+                <div class="section-header">
+                    <h2>👥 Manage Admins</h2>
+                    <button id="show-add-admin-btn" class="btn-primary">+ Add Admin</button>
+                </div>
+
+                <!-- Add Admin Form (Hidden by default) -->
+                <div id="add-admin-form-container" class="form-container" style="display: none;">
+                    <h3>Add New Admin</h3>
+                    <form id="add-admin-form">
+                        <div class="form-group">
+                            <label>Username *</label>
+                            <input type="text" name="username" placeholder="admin@jersivo" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password *</label>
+                            <input type="text" name="password" placeholder="Choose a secure password" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Display Name *</label>
+                            <input type="text" name="name" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit" class="btn-primary">Add Admin</button>
+                            <button type="button" id="cancel-add-admin-btn" class="btn-secondary">Cancel</button>
+                        </div>
+                        <p id="add-admin-message" class="message"></p>
+                    </form>
+                </div>
+
+                <!-- Admins List -->
+                <div id="admins-list" class="admins-grid">
+                    <p class="loading">Loading admins...</p>
+                </div>
+            </section>
+
+            <!-- Audit Logs Section -->
+            <section id="logs-section" class="owner-section">
+                <div class="section-header">
+                    <h2>📋 Audit Logs</h2>
+                    <select id="log-type-select">
+                        <option value="Authentication">Authentication Logs</option>
+                        <option value="Product Actions">Product Actions</option>
+                        <option value="Owner Actions">Owner Actions</option>
+                    </select>
+                    <button id="refresh-logs-btn" class="btn-primary">🔄 Refresh</button>
+                </div>
+
+                <div id="logs-list" class="logs-container">
+                    <p class="loading">Loading logs...</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div id="change-password-modal" class="modal">
+            <div class="modal-content">
+                <h2>🔑 Change Password</h2>
+                <p>Admin: <strong id="change-password-admin"></strong></p>
+                <form id="change-password-form">
+                    <input type="hidden" id="change-password-username">
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="text" id="new-password" placeholder="Enter new password" required>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="submit" class="btn-primary">Change Password</button>
+                        <button type="button" class="btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                    </div>
+                </form>
+                <div id="password-result" class="password-result" style="display: none;">
+                    <p>✅ Password changed successfully!</p>
+                    <p><strong>New Password:</strong> <span id="display-new-password"></span></p>
+                    <button onclick="copyPassword()" class="btn-copy">📋 Copy Password</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Action Modal -->
+        <div id="confirm-modal" class="modal">
+            <div class="modal-content">
+                <h2 id="confirm-title">Confirm Action</h2>
+                <p id="confirm-message"></p>
+                <div class="modal-buttons">
+                    <button id="confirm-yes-btn" class="btn-danger">Confirm</button>
+                    <button id="confirm-no-btn" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="/js/owner.js"></script>
+</body>
+</html>
