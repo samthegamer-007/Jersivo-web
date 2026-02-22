@@ -30,7 +30,24 @@ app.use(session({
                 maxAge: 4 * 60 * 60 * 1000 // 4 hours
                   }
                   }));
+                  // ============================================
+// SERVE HTML PAGES
+// ============================================
 
+// Serve admin panel HTML
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, '../admin/admin.html'));
+});
+
+// Serve owner panel HTML  
+app.get('/owner', (req, res) => {
+  res.sendFile(path.join(__dirname, '../owner/owner.html'));
+});
+
+// Serve main website (root)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
                   // ============================================
                   // AUTHENTICATION ROUTES
                   // ============================================
