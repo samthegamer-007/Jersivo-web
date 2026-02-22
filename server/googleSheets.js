@@ -306,6 +306,33 @@ const auth = new google.auth.GoogleAuth({
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 throw error;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }
+/**
+ * Read logs from a specific log sheet
+ * @param {string} sheetName - 'Authentication', 'Product Actions', or 'Owner Actions'
+ * @returns {Array} Array of log objects
+ */
+async function readLogs(sheetName) {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_IDS.logs,
+      range: `${sheetName}!A:G`,
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      return [];
+    }
+
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+
+    return dataRows.map(row => rowToObject(headers, row));
+  } catch (error) {
+    console.error('Error reading logs:', error);
+    throw error;
+  }
+}
+
 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   // ============================================
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   // EXPORTS
