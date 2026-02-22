@@ -1,5 +1,116 @@
 const googleSheets = require('./googleSheets');
 
+// ============================================
+// DEVICE NAME PARSER
+// ============================================
+
+/**
+ * Parse user agent to friendly device name
+ * @param {string} userAgent - Raw user agent string
+ * @returns {string} - Friendly device name
+ */
+function parseUserAgent(userAgent) {
+  if (!userAgent) return 'Unknown Device';
+  
+  const ua = userAgent.toLowerCase();
+  
+  // Samsung devices
+  if (ua.includes('samsung')) {
+    // Extract model number (e.g., SM-G991B)
+    const modelMatch = ua.match(/sm-[a-z0-9]+/i);
+    if (modelMatch) {
+      const model = modelMatch[0].toUpperCase();
+      // Common Samsung models
+      if (model.includes('SM-G99')) return `Samsung Galaxy S21 (${model})`;
+      if (model.includes('SM-G98')) return `Samsung Galaxy S20 (${model})`;
+      if (model.includes('SM-G97')) return `Samsung Galaxy S10 (${model})`;
+      if (model.includes('SM-A')) return `Samsung Galaxy A-Series (${model})`;
+      if (model.includes('SM-M')) return `Samsung Galaxy M-Series (${model})`;
+      if (model.includes('SM-T')) return `Samsung Tablet (${model})`;
+      return `Samsung ${model}`;
+    }
+    return 'Samsung Device';
+  }
+  
+  // Oppo devices
+  if (ua.includes('oppo')) {
+    const modelMatch = ua.match(/oppo\s+([a-z0-9]+)/i);
+    if (modelMatch) {
+      return `Oppo ${modelMatch[1].toUpperCase()}`;
+    }
+    return 'Oppo Phone';
+  }
+  
+  // Xiaomi/Redmi devices
+  if (ua.includes('xiaomi') || ua.includes('redmi')) {
+    const modelMatch = ua.match(/(redmi|mi)\s+([a-z0-9\s]+)/i);
+    if (modelMatch) {
+      return `Xiaomi ${modelMatch[0].toUpperCase()}`;
+    }
+    if (ua.includes('redmi')) return 'Xiaomi Redmi';
+    return 'Xiaomi Phone';
+  }
+  
+  // Vivo devices
+  if (ua.includes('vivo')) {
+    const modelMatch = ua.match(/vivo\s+([a-z0-9]+)/i);
+    if (modelMatch) {
+      return `Vivo ${modelMatch[1].toUpperCase()}`;
+    }
+    return 'Vivo Phone';
+  }
+  
+  // Realme devices
+  if (ua.includes('realme')) {
+    const modelMatch = ua.match(/realme\s+([a-z0-9\s]+)/i);
+    if (modelMatch) {
+      return `Realme ${modelMatch[1].toUpperCase()}`;
+    }
+    return 'Realme Phone';
+  }
+  
+  // OnePlus devices
+  if (ua.includes('oneplus')) {
+    const modelMatch = ua.match(/oneplus\s+([a-z0-9]+)/i);
+    if (modelMatch) {
+      return `OnePlus ${modelMatch[1].toUpperCase()}`;
+    }
+    return 'OnePlus Phone';
+  }
+  
+  // Apple devices
+  if (ua.includes('iphone')) {
+    if (ua.includes('iphone14')) return 'iPhone 14';
+    if (ua.includes('iphone13')) return 'iPhone 13';
+    if (ua.includes('iphone12')) return 'iPhone 12';
+    if (ua.includes('iphone11')) return 'iPhone 11';
+    return 'iPhone';
+  }
+  if (ua.includes('ipad')) return 'iPad';
+  if (ua.includes('macintosh') || ua.includes('mac os')) return 'Mac';
+  
+  // Google Pixel
+  if (ua.includes('pixel')) {
+    const modelMatch = ua.match(/pixel\s+([0-9]+)/i);
+    if (modelMatch) {
+      return `Google Pixel ${modelMatch[1]}`;
+    }
+    return 'Google Pixel';
+  }
+  
+  // Desktop browsers
+  if (ua.includes('windows')) return 'Windows PC';
+  if (ua.includes('linux') && !ua.includes('android')) return 'Linux PC';
+  
+  // Tablets
+  if (ua.includes('tablet')) return 'Tablet';
+  
+  // Generic mobile
+  if (ua.includes('mobile') || ua.includes('android')) return 'Android Phone';
+  
+  return 'Unknown Device';
+}
+
 /**
  * Log user authentication (login/logout)
  * @param {string} action - LOGIN, LOGOUT, AUTO_LOGOUT
@@ -14,7 +125,7 @@ async function logAuthentication(action, user, req) {
       admin_name: user.name,
       action: action,
       ip: req ? (req.ip || req.connection.remoteAddress) : 'System',
-      user_agent: req ? (req.get('user-agent') || 'Unknown') : 'System',
+      user_agent: req ? parseUserAgent(req.get('user-agent')) : 'System',
     });
   } catch (error) {
     console.error('Error logging authentication:', error);
