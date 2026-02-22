@@ -713,3 +713,26 @@ body {
     width: 100%;
   }
 }
+/* Real-time status colors */
+.status-online-working {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.status-online-idle {
+  color: #ffc107;
+  font-weight: bold;
+}
+
+.status-offline {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.status-active {
+  color: #28a745;
+}
+
+.status-blocked {
+  color: #dc3545;
+}
