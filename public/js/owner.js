@@ -544,15 +544,26 @@ async function loadLogs() {
   
   listEl.innerHTML = '<p class="loading">Loading logs...</p>';
   
-  try {
+ try {
     const response = await fetch(`/api/owner/logs/${encodeURIComponent(logType)}`);
+    
+    // Check if response is ok
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data = await response.json();
+    
+    // Check if data is an array
+    if (!Array.isArray(data)) {
+      throw new Error('Invalid data format received');
+    }
     
     currentLogs = data;
     displayLogs(data, logType);
   } catch (error) {
     console.error('Error loading logs:', error);
-    listEl.innerHTML = '<p class="error">Failed to load logs</p>';
+    listEl.innerHTML = `<p class="error">Failed to load logs: ${error.message}</p>`;
   }
 }
 
