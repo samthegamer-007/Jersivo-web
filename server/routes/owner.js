@@ -274,8 +274,8 @@ router.get('/logs/:type', auth.requireOwner, async (req, res) => {
       return res.status(400).json({ error: 'Invalid log type' });
     }
     
-    // Read logs from Google Sheets
-    const logs = await googleSheets.readProducts(logType); // Using readProducts since structure is similar
+    // Read logs from Google Sheetsurs error.
+    const logs = await googleSheets.readLogs(logType); // Using readLogs, otherwise ret
     
     res.json(logs);
   } catch (error) {
