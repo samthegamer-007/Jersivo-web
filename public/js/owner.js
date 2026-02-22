@@ -345,26 +345,54 @@ async function loadAdmins() {
 function displayAdmins(admins) {
   const listEl = document.getElementById('admins-list');
   
-  listEl.innerHTML = admins.map(admin => `
-    <div class="admin-card">
-      <div class="admin-info">
-        <h3>
-          ${admin.name}
-          <span class="role-badge role-${admin.role.toLowerCase()}">${admin.role}</span>
-        </h3>
-        <p>Username: ${admin.username}</p>
-        <p>Status: <span class="status-${admin.status.toLowerCase()}">${admin.status}</span></p>
-        <p>Created: ${new Date(admin.created_at).toLocaleDateString()}</p>
-      </div>
-      ${admin.role !== 'OWNER' ? `
-        <div class="admin-actions">
-          <button class="btn-password" onclick="openChangePasswordModal('${admin.username}', '${admin.name}')">Change Password</button>
-          <button class="btn-block" onclick="blockAdmin('${admin.username}')">Block</button>
-          <button class="btn-remove" onclick="removeAdmin('${admin.username}', '${admin.name}')">Remove</button>
+  listEl.innerHTML = admins.map(admin => {
+    // Check if admin is currently connected (from WebSocket real-time data)
+    const liveStatus = adminStatuses.find(a => a.username === admin.username);
+    const isOnline = liveStatus && liveStatus.isConnected;
+    
+    // Determine actual status
+    let displayStatus = admin.status;
+    let statusClass = `status-${admin.status.toLowerCase()}`;
+    let statusIcon = '';
+    
+    if (isOnline) {
+      if (liveStatus.status === 'ACTIVE_WORKING') {
+        displayStatus = 'ONLINE - Working';
+        statusClass = 'status-online-working';
+        statusIcon = '🟢🟢';
+      } else {
+        displayStatus = 'ONLINE - Idle';
+        statusClass = 'status-online-idle';
+        statusIcon = '🟢🟡';
+      }
+    } else {
+      displayStatus = 'OFFLINE';
+      statusClass = 'status-offline';
+      statusIcon = '🔴';
+    }
+    
+    return `
+      <div class="admin-card">
+        <div class="admin-info">
+          <h3>
+            ${admin.name}
+            <span class="role-badge role-${admin.role.toLowerCase()}">${admin.role}</span>
+          </h3>
+          <p>Username: ${admin.username}</p>
+          <p>Status: ${statusIcon} <span class="${statusClass}">${displayStatus}</span></p>
+          <p>Created: ${new Date(admin.created_at).toLocaleDateString()}</p>
+          ${isOnline ? `<p style="font-size: 12px; color: #666;">Last Activity: ${new Date(liveStatus.lastActivity).toLocaleTimeString()}</p>` : ''}
         </div>
-      ` : ''}
-    </div>
-  `).join('');
+        ${admin.role !== 'OWNER' ? `
+          <div class="admin-actions">
+            <button class="btn-password" onclick="openChangePasswordModal('${admin.username}', '${admin.name}')">Change Password</button>
+            <button class="btn-block" onclick="blockAdmin('${admin.username}')">Block</button>
+            <button class="btn-remove" onclick="removeAdmin('${admin.username}', '${admin.name}')">Remove</button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
 }
 
 async function handleAddAdmin(e) {
