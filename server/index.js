@@ -17,8 +17,12 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
-app.use(express.static(path.join(__dirname, '../admin')));
-app.use(express.static(path.join(__dirname, '../owner')));
+app.use('/admin', express.static(path.join(__dirname, '../admin')));
+app.use('/owner', express.static(path.join(__dirname, '../owner')));
+
+// Explicitly serve CSS files
+app.use('/css', express.static(path.join(__dirname, '../public/css')));
+app.use('/js', express.static(path.join(__dirname, '../public/js')));
 
 // Session configuration
 app.use(session({
