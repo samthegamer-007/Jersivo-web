@@ -20,11 +20,30 @@ body {
    ============================================ */
 
 .screen {
-  display: none;
+  display: none !important;
 }
 
 .screen.active {
-  display: block;
+  display: block !important;
+}
+
+/* Ensure login screen is completely hidden when not active */
+#login-screen:not(.active) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  top: -9999px !important;
+}
+
+/* Ensure owner panel takes full viewport when active */
+#owner-panel.active {
+  display: block !important;
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 /* ============================================
