@@ -1,6 +1,6 @@
 // ============================================
-// ADMIN PANEL - Main JavaScript
-// Connects to Google Sheets backend with WebSocket
+// JERSIVO ADMIN PANEL - JavaScript
+// Modern table-based interface
 // ============================================
 
 let currentUser = null;
@@ -46,7 +46,7 @@ function showLoginScreen() {
 function showAdminPanel() {
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('admin-panel').classList.add('active');
-  document.getElementById('admin-name').textContent = `👤 ${currentUser.name}`;
+  document.getElementById('admin-name').textContent = currentUser.name;
   
   // Connect WebSocket
   connectWebSocket();
@@ -91,7 +91,6 @@ async function handleLogin(e) {
 
 async function handleLogout() {
   try {
-    // Disconnect WebSocket
     if (socket) {
       socket.disconnect();
     }
@@ -110,7 +109,6 @@ async function handleLogout() {
 // ============================================
 
 function connectWebSocket() {
-  // Load Socket.IO from CDN
   if (typeof io === 'undefined') {
     const script = document.createElement('script');
     script.src = 'https://cdn.socket.io/4.6.0/socket.io.min.js';
@@ -124,23 +122,20 @@ function connectWebSocket() {
 function initializeWebSocket() {
   socket = io();
   
-  // Connect to admin room
   socket.emit('admin:connect', {
     username: currentUser.username,
     name: currentUser.name,
     role: currentUser.role
   });
   
-  // Send activity pings
   let activityTimeout;
   const sendActivity = (action) => {
     clearTimeout(activityTimeout);
     activityTimeout = setTimeout(() => {
       socket.emit('admin:activity', { action });
-    }, 5000); // Throttle to once per 5 seconds
+    }, 5000);
   };
   
-  // Track user activity
   ['mousemove', 'keydown', 'click', 'scroll'].forEach(event => {
     document.addEventListener(event, () => sendActivity('User active'));
   });
@@ -153,8 +148,8 @@ function initializeWebSocket() {
 // ============================================
 
 async function loadProducts() {
-  const listEl = document.getElementById('products-list');
-  listEl.innerHTML = '<p class="loading">Loading products...</p>';
+  const tbody = document.getElementById('products-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading-row">Loading products...</td></tr>';
   
   try {
     const response = await fetch('/api/admin/products?sheet=Sheet1');
@@ -164,33 +159,32 @@ async function loadProducts() {
     displayProducts(products);
   } catch (error) {
     console.error('Error loading products:', error);
-    listEl.innerHTML = '<p class="error">Failed to load products</p>';
+    tbody.innerHTML = '<tr><td colspan="6" class="loading-row">Failed to load products</td></tr>';
   }
 }
 
 function displayProducts(productsToShow) {
-  const listEl = document.getElementById('products-list');
+  const tbody = document.getElementById('products-tbody');
   
   if (productsToShow.length === 0) {
-    listEl.innerHTML = '<p>No products found</p>';
+    tbody.innerHTML = '<tr><td colspan="6" class="loading-row">No products found</td></tr>';
     return;
   }
   
-  listEl.innerHTML = productsToShow.map(product => `
-    <div class="product-card">
-      <img src="${product.image1}" alt="${product.name}">
-      <div class="product-info">
-        <span class="product-label label-${product.label.toLowerCase()}">${product.label}</span>
-        <h3>${product.name}</h3>
-        <p class="product-id">${product.id}</p>
-        <p class="product-price">₹${product.price}</p>
-        <p class="product-category">${product.category}</p>
-      </div>
-      <div class="product-actions">
-        <button onclick="editProduct('${product.id}')" class="btn-edit">✏️ Edit</button>
-        <button onclick="confirmDelete('${product.id}', '${product.name}')" class="btn-delete">🗑️ Delete</button>
-      </div>
-    </div>
+  tbody.innerHTML = productsToShow.map(product => `
+    <tr>
+      <td><img src="${product.image1}" alt="${product.name}" class="product-img"></td>
+      <td><strong>${product.name}</strong><br><small>${product.id}</small></td>
+      <td>${product.category}</td>
+      <td><strong>Rs ${product.price.toLocaleString()}</strong></td>
+      <td>${product.label === 'BESTSELLER' || product.label === 'HOT' ? `<span class="featured-badge">Featured</span>` : ''}</td>
+      <td>
+        <div class="product-actions">
+          <button onclick="editProduct('${product.id}')" class="btn-edit">Edit</button>
+          <button onclick="confirmDelete('${product.id}', '${product.name}')" class="btn-delete">Delete</button>
+        </div>
+      </td>
+    </tr>
   `).join('');
 }
 
@@ -206,8 +200,12 @@ function setupEventListeners() {
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
   
   // Navigation
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchSection(btn.dataset.section));
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = btn.dataset.section;
+      switchSection(section);
+    });
   });
   
   // Refresh products
@@ -237,17 +235,15 @@ function filterProducts() {
   
   let filtered = products;
   
-  // Filter by category
   if (category !== 'all') {
     filtered = filtered.filter(p => p.category === category);
   }
   
-  // Filter by search
   if (searchTerm) {
     filtered = filtered.filter(p => 
       p.name.toLowerCase().includes(searchTerm) ||
       p.id.toLowerCase().includes(searchTerm) ||
-      p.description.toLowerCase().includes(searchTerm)
+      (p.description && p.description.toLowerCase().includes(searchTerm))
     );
   }
   
@@ -255,18 +251,30 @@ function filterProducts() {
 }
 
 function switchSection(section) {
-  // Update nav buttons
-  document.querySelectorAll('.nav-btn').forEach(btn => {
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.section === section);
   });
   
   // Hide all sections
-  document.querySelectorAll('.admin-section').forEach(sec => {
+  document.querySelectorAll('.content-section').forEach(sec => {
     sec.classList.remove('active');
   });
   
   // Show selected section
-  document.getElementById(`${section}-section`).classList.add('active');
+  const sectionId = section === 'products' ? 'products-section' : 
+                    section === 'add-product' ? 'add-product-section' : 
+                    'edit-product-section';
+  
+  document.getElementById(sectionId).classList.add('active');
+  
+  // Update page title
+  const titles = {
+    'products': 'Products Management',
+    'add-product': 'Add New Product',
+    'edit-product': 'Edit Product'
+  };
+  document.getElementById('page-title').textContent = titles[section] || 'Admin Panel';
 }
 
 // ============================================
@@ -281,12 +289,17 @@ async function handleAddProduct(e) {
   const messageEl = document.getElementById('add-product-message');
   
   messageEl.textContent = 'Adding product...';
-  messageEl.className = 'message';
+  messageEl.className = 'form-message';
   
-  // Validate Cloudinary URLs
-  if (!product.image1.includes('res.cloudinary.com') || !product.image2.includes('res.cloudinary.com')) {
-    messageEl.textContent = 'Images must be from Cloudinary!';
-    messageEl.className = 'message error';
+  if (!product.image1.includes('res.cloudinary.com')) {
+    messageEl.textContent = 'Image 1 must be from Cloudinary!';
+    messageEl.className = 'form-message error';
+    return;
+  }
+  
+  if (product.image2 && !product.image2.includes('res.cloudinary.com')) {
+    messageEl.textContent = 'Image 2 must be from Cloudinary!';
+    messageEl.className = 'form-message error';
     return;
   }
   
@@ -301,18 +314,15 @@ async function handleAddProduct(e) {
     
     if (data.success) {
       messageEl.textContent = '✅ Product added successfully!';
-      messageEl.className = 'message success';
+      messageEl.className = 'form-message success';
       
-      // Reset form
       e.target.reset();
       
-      // Reload products
       setTimeout(() => {
         loadProducts();
         switchSection('products');
       }, 1500);
       
-      // Send WebSocket notification
       if (socket) {
         socket.emit('product:added', {
           adminName: currentUser.name,
@@ -321,12 +331,12 @@ async function handleAddProduct(e) {
       }
     } else {
       messageEl.textContent = `❌ ${data.error}`;
-      messageEl.className = 'message error';
+      messageEl.className = 'form-message error';
     }
   } catch (error) {
     console.error('Error adding product:', error);
     messageEl.textContent = '❌ Failed to add product';
-    messageEl.className = 'message error';
+    messageEl.className = 'form-message error';
   }
 }
 
@@ -338,7 +348,6 @@ function editProduct(productId) {
   const product = products.find(p => p.id === productId);
   if (!product) return;
   
-  // Populate form
   document.getElementById('edit-product-id').value = product.id;
   document.getElementById('edit-id').value = product.id;
   document.getElementById('edit-name').value = product.name;
@@ -347,11 +356,10 @@ function editProduct(productId) {
   document.getElementById('edit-label').value = product.label;
   document.getElementById('edit-sizes').value = product.sizes;
   document.getElementById('edit-image1').value = product.image1;
-  document.getElementById('edit-image2').value = product.image2;
+  document.getElementById('edit-image2').value = product.image2 || '';
   document.getElementById('edit-description').value = product.description || '';
   document.getElementById('edit-customisable').value = product.customisable || 'No';
   
-  // Switch to edit section
   switchSection('edit-product');
 }
 
@@ -360,12 +368,11 @@ async function handleEditProduct(e) {
   
   const formData = new FormData(e.target);
   const updates = Object.fromEntries(formData);
-  const productId = updates.productId;
-  delete updates.productId;
+  const productId = document.getElementById('edit-product-id').value;
   
   const messageEl = document.getElementById('edit-product-message');
   messageEl.textContent = 'Updating product...';
-  messageEl.className = 'message';
+  messageEl.className = 'form-message';
   
   try {
     const response = await fetch(`/api/admin/products/${productId}`, {
@@ -378,15 +385,13 @@ async function handleEditProduct(e) {
     
     if (data.success) {
       messageEl.textContent = '✅ Product updated successfully!';
-      messageEl.className = 'message success';
+      messageEl.className = 'form-message success';
       
-      // Reload products
       setTimeout(() => {
         loadProducts();
         switchSection('products');
       }, 1500);
       
-      // Send WebSocket notification
       if (socket) {
         socket.emit('product:edited', {
           adminName: currentUser.name,
@@ -395,12 +400,12 @@ async function handleEditProduct(e) {
       }
     } else {
       messageEl.textContent = `❌ ${data.error}`;
-      messageEl.className = 'message error';
+      messageEl.className = 'form-message error';
     }
   } catch (error) {
     console.error('Error updating product:', error);
     messageEl.textContent = '❌ Failed to update product';
-    messageEl.className = 'message error';
+    messageEl.className = 'form-message error';
   }
 }
 
@@ -430,10 +435,8 @@ async function handleDelete() {
     const data = await response.json();
     
     if (data.success) {
-      // Close modal
       closeDeleteModal();
       
-      // Send WebSocket notification
       if (socket) {
         socket.emit('product:delete_request', {
           adminName: currentUser.name,
@@ -441,10 +444,8 @@ async function handleDelete() {
         });
       }
       
-      // Reload products (product will be gone - admin thinks it's deleted!)
       loadProducts();
       
-      // Show success (admin thinks it's permanent!)
       alert('✅ Product deleted successfully');
     } else {
       alert('❌ Failed to delete product');
@@ -453,4 +454,4 @@ async function handleDelete() {
     console.error('Error deleting product:', error);
     alert('❌ Failed to delete product');
   }
-}
+    }
