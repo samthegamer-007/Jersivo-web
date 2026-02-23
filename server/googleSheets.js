@@ -313,22 +313,40 @@ const auth = new google.auth.GoogleAuth({
  */
 async function readLogs(sheetName) {
   try {
+    console.log(`Reading logs from: ${sheetName}`);
+    console.log(`Spreadsheet ID: ${SPREADSHEET_IDS.logs}`);
+    
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_IDS.logs,
-      range: `${sheetName}!A:G`,
+      range: `${sheetName}!A:Z`, // Expand range to Z to be safe
     });
 
     const rows = response.data.values;
+    
+    console.log(`Rows received: ${rows ? rows.length : 0}`);
+    
     if (!rows || rows.length === 0) {
+      console.log('No data found in logs sheet');
+      return [];
+    }
+
+    if (rows.length === 1) {
+      console.log('Only headers found, no data rows');
       return [];
     }
 
     const headers = rows[0];
     const dataRows = rows.slice(1);
 
-    return dataRows.map(row => rowToObject(headers, row));
+    console.log(`Headers: ${headers.join(', ')}`);
+    console.log(`Data rows: ${dataRows.length}`);
+
+    const logs = dataRows.map(row => rowToObject(headers, row));
+    
+    return logs;
   } catch (error) {
-    console.error('Error reading logs:', error);
+    console.error('Error reading logs:', error.message);
+    console.error('Full error:', error);
     throw error;
   }
 }
