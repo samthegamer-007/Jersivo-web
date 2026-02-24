@@ -7,25 +7,23 @@
     <link rel="stylesheet" href="/css/admin.css">
 </head>
 <body>
+
     <!-- Login Screen -->
     <div id="login-screen" class="screen active">
         <div class="login-container">
             <div class="login-card">
                 <div class="login-header">
-                    <div class="logo">
-                        <img src="https://res.cloudinary.com/djoqwg1ir/image/upload/v1734268356/Jersivo_logo_fbwezz.png" alt="Jersivo" class="logo-img">
-                    </div>
                     <h1>🔐 Jersivo Admin</h1>
                     <p class="subtitle">Secure Authentication</p>
                 </div>
                 <form id="login-form">
                     <div class="form-field">
                         <label>Username</label>
-                        <input type="text" id="username" placeholder="Enter username" required>
+                        <input type="text" id="username" name="username" placeholder="Enter username" required autocomplete="username">
                     </div>
                     <div class="form-field">
                         <label>Password</label>
-                        <input type="password" id="password" placeholder="Enter password" required>
+                        <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="current-password">
                     </div>
                     <button type="submit" class="login-btn">Login</button>
                     <p id="login-error" class="error-msg"></p>
