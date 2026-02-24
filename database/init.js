@@ -36,58 +36,51 @@ db.serialize(() => {
                                                                                                            * Sync products from Google Sheets to SQLite cache
                                                                                                             * @param {string} sheetName - Name of the sheet to sync
                                                                                                              */
-                                                                                                             async function syncProductsToCache(sheetName = 'Sheet1') {
-                                                                                                               try {
-                                                                                                                   console.log(`📥 Syncing products from Google Sheets: ${sheetName}`);
-                                                                                                                       
-                                                                                                                           // Get products from Google Sheets
-                                                                                                                               const products = await googleSheets.readProducts(sheetName);
-                                                                                                                                   
-                                                                                                                                       // Clear existing cache
-                                                                                                                                           db.run('DELETE FROM products');
-                                                                                                                                               
-                                                                                                                                                   // Insert fresh data from Sheets
-                                                                                                                                                       const stmt = db.prepare(`
-                                                                                                                                                             INSERT INTO products (
-                                                                                                                                                                     id, name, price, category, image1, image2, description,
-                                                                                                                                                                             customisable, sizes, label, status, created_at, created_by,
-                                                                                                                                                                                     last_modified_at, last_modified_by
-                                                                                                                                                                                           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                                                                                                                                                                               `);
-
-                                                                                                                                                                                                   products.forEach(product => {
-                                                                                                                                                                                                         // Only cache LIVE products (hide DELETION_PENDING from website)
-                                                                                                                                                                                                               if (product.status === 'LIVE' || !product.status) {
-                                                                                                                                                                                                                       stmt.run(
-                                                                                                                                                                                                                                 product.id,
-                                                                                                                                                                                                                                           product.name,
-                                                                                                                                                                                                                                                     product.price,
-                                                                                                                                                                                                                                                               product.category,
-                                                                                                                                                                                                                                                                         product.image1,
-                                                                                                                                                                                                                                                                                   product.image2 || '',
-                                                                                                                                                                                                                                                                                             product.description || '',
-                                                                                                                                                                                                                                                                                                       product.customisable || 'No',
-                                                                                                                                                                                                                                                                                                                 product.sizes || '0',
-                                                                                                                                                                                                                                                                                                                           product.label || '',
-                                                                                                                                                                                                                                                                                                                                     product.status || 'LIVE',
-                                                                                                                                                                                                                                                                                                                                               product.created_at || new Date().toISOString(),
-                                                                                                                                                                                                                                                                                                                                                         product.created_by || 'system',
-                                                                                                                                                                                                                                                                                                                                                                   product.last_modified_at || new Date().toISOString(),
-                                                                                                                                                                                                                                                                                                                                                                             product.last_modified_by || 'system'
-                                                                                                                                                                                                                                                                                                                                                                                     );
-                                                                                                                                                                                                                                                                                                                                                                                           }
-                                                                                                                                                                                                                                                                                                                                                                                               });
-
-                                                                                                                                                                                                                                                                                                                                                                                                   stmt.finalize();
-                                                                                                                                                                                                                                                                                                                                                                                                       
-                                                                                                                                                                                                                                                                                                                                                                                                           console.log(`✅ Synced ${products.length} products to cache`);
-                                                                                                                                                                                                                                                                                                                                                                                                               return true;
-                                                                                                                                                                                                                                                                                                                                                                                                                 } catch (error) {
-                                                                                                                                                                                                                                                                                                                                                                                                                     console.error('❌ Error syncing products to cache:', error);
-                                                                                                                                                                                                                                                                                                                                                                                                                         return false;
-                                                                                                                                                                                                                                                                                                                                                                                                                           }
-                                                                                                                                                                                                                                                                                                                                                                                                                           }
-
+                                                                                                             async function syncProductsToCache() {
+  try {
+    console.log('📊 Syncing products from Google Sheets to cache...');
+    
+    const products = await googleSheets.readProducts('Sheet1');
+    
+    // Filter only LIVE products (exclude DELETION_PENDING)
+    const liveProducts = products.filter(p => p.status !== 'DELETION_PENDING');
+    
+    // Clear existing cache
+    db.run('DELETE FROM products', (err) => {
+      if (err) {
+        console.error('Error clearing cache:', err);
+      }
+    });
+    
+    // Use INSERT OR REPLACE to handle duplicates
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO products (id, name, price, category, image1, image2, description, customisable, sizes, label)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    for (const product of liveProducts) {
+      stmt.run(
+        product.id,
+        product.name,
+        product.price,
+        product.category,
+        product.image1,
+        product.image2 || '',
+        product.description || '',
+        product.customisable || 'No',
+        product.sizes || '0',
+        product.label || 'NEW'
+      );
+    }
+    
+    stmt.finalize();
+    
+    console.log(`✅ Synced ${liveProducts.length} products to cache`);
+  } catch (error) {
+    console.error('Error syncing products to cache:', error);
+    throw error; // Don't crash the server
+  }
+}
                                                                                                                                                                                                                                                                                                                                                                                                                            /**
                                                                                                                                                                                                                                                                                                                                                                                                                             * Get all products from cache
                                                                                                                                                                                                                                                                                                                                                                                                                              * @param {Object} filters - Optional filters (category, search, etc.)
