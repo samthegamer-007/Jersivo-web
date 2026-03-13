@@ -189,21 +189,7 @@ app.use('/api/admin', adminRoutes);
 // Owner routes
 app.use('/api/owner', ownerRoutes);
 
-// WEBSOCKET INITIALIZATION
-// ============================================
-
-const http = require('http');
-const { initializeWebSocket } = require('./websocket');
-
-// Create HTTP server (needed for WebSocket)
-const server = http.createServer(app);
-
-// Initialize WebSocket
-const io = initializeWebSocket(server);
-
-// Make io available to routes (optional, for future use)
-app.set('io', io);
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
 // ============================================
 // SERVER START
 // ============================================
@@ -215,10 +201,9 @@ syncProductsToCache('Sheet1').then(() => {
   console.error('❌ Initial sync failed:', err);
 });
 
-// Start server with WebSocket support
-server.listen(PORT, () => {
+// Start server
+app.listen(PORT, () => {
   console.log(`🚀 Jersivo server running on port ${PORT}`);
   console.log(`📊 Using Google Sheets as database`);
   console.log(`💾 SQLite cache enabled`);
-  console.log(`🔌 WebSocket enabled for real-time features`);
-});                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+});
