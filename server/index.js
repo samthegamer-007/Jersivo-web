@@ -9,6 +9,7 @@ const auth = require('./auth');
 const googleSheets = require('./googleSheets');
 const adminRoutes = require('./routes/admin');
 const ownerRoutes = require('./routes/owner'); 
+const productsRoutes = require('./routes/products');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -188,7 +189,8 @@ app.get('/', (req, res) => {
 app.use('/api/admin', adminRoutes);
 // Owner routes
 app.use('/api/owner', ownerRoutes);
-
+// Products routes
+app.use('/api/admin/products', productsRoutes);
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 // ============================================
 // SERVER START
