@@ -351,6 +351,130 @@ async function readLogs(sheetName) {
   }
 }
 
+/**
+ * Update entire row in a sheet
+ * @param {string} sheetName - Sheet name
+ * @param {number} rowNumber - Row number (1-based, includes header)
+ * @param {Array} rowData - Array of values for the row
+ * @param {string} spreadsheetId - Optional spreadsheet ID (uses env default if not provided)
+ */
+async function updateRow(sheetName, rowNumber, rowData, spreadsheetId = null) {
+  try {
+    const auth = await authorize();
+    const sheets = google.sheets({ version: 'v4', auth });
+    
+    const targetSpreadsheetId = spreadsheetId || process.env.SPREADSHEET_ID;
+    
+    // Convert row data to range (e.g., row 2 → A2:O2 for 15 columns)
+    const lastColumn = String.fromCharCode(65 + rowData.length - 1); // A=65, B=66, etc.
+    const range = `${sheetName}!A${rowNumber}:${lastColumn}${rowNumber}`;
+    
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: targetSpreadsheetId,
+      range,
+      valueInputOption: 'RAW',
+      resource: {
+        values: [rowData]
+      }
+    });
+    
+    console.log(`✅ Updated row ${rowNumber} in ${sheetName}`);
+    
+  } catch (error) {
+    console.error('Error updating row:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update single cell in a sheet
+ * @param {string} sheetName - Sheet name
+ * @param {number} rowNumber - Row number (1-based)
+ * @param {number} columnNumber - Column number (1-based, A=1, B=2, etc.)
+ * @param {any} value - Value to set
+ * @param {string} spreadsheetId - Optional spreadsheet ID
+ */
+async function updateCell(sheetName, rowNumber, columnNumber, value, spreadsheetId = null) {
+  try {
+    const auth = await authorize();
+    const sheets = google.sheets({ version: 'v4', auth });
+    
+    const targetSpreadsheetId = spreadsheetId || process.env.SPREADSHEET_ID;
+    
+    // Convert column number to letter (1=A, 2=B, etc.)
+    const columnLetter = String.fromCharCode(64 + columnNumber);
+    const range = `${sheetName}!${columnLetter}${rowNumber}`;
+    
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: targetSpreadsheetId,
+      range,
+      valueInputOption: 'RAW',
+      resource: {
+        values: [[value]]
+      }
+    });
+    
+    console.log(`✅ Updated cell ${range} to: ${value}`);
+    
+  } catch (error) {
+    console.error('Error updating cell:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete row from sheet
+ * @param {string} sheetName - Sheet name
+ * @param {number} rowNumber - Row number to delete (1-based)
+ * @param {string} spreadsheetId - Optional spreadsheet ID
+ */
+async function deleteRow(sheetName, rowNumber, spreadsheetId = null) {
+  try {
+    const auth = await authorize();
+    const sheets = google.sheets({ version: 'v4', auth });
+    
+    const targetSpreadsheetId = spreadsheetId || process.env.SPREADSHEET_ID;
+    
+    // Get sheet ID by name
+    const spreadsheet = await sheets.spreadsheets.get({
+      spreadsheetId: targetSpreadsheetId
+    });
+    
+    const sheet = spreadsheet.data.sheets.find(s => s.properties.title === sheetName);
+    if (!sheet) {
+      throw new Error(`Sheet not found: ${sheetName}`);
+    }
+    
+    const sheetId = sheet.properties.sheetId;
+    
+    // Delete the row (0-based index for API)
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: targetSpreadsheetId,
+      resource: {
+        requests: [
+          {
+            deleteDimension: {
+              range: {
+                sheetId: sheetId,
+                dimension: 'ROWS',
+                startIndex: rowNumber - 1,
+                endIndex: rowNumber
+              }
+            }
+          }
+        ]
+      }
+    });
+    
+    console.log(`✅ Deleted row ${rowNumber} from ${sheetName}`);
+    
+  } catch (error) {
+    console.error('Error deleting row:', error);
+    throw error;
+  }
+}
+
+
 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   // ============================================
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   // EXPORTS
@@ -371,4 +495,8 @@ async function readLogs(sheetName) {
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           // Logging
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             writeLog,
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             readLogs,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               // New helper functions
+    updateRow,
+    updateCell,
+    deleteRow,
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             };
