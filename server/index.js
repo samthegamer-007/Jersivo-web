@@ -10,6 +10,7 @@ const googleSheets = require('./googleSheets');
 const adminRoutes = require('./routes/admin');
 const ownerRoutes = require('./routes/owner'); 
 const productsRoutes = require('./routes/products');
+const ordersRoutes = require('./routes/orders');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -191,7 +192,11 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/owner', ownerRoutes);
 // Products routes
 app.use('/api/admin/products', productsRoutes);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+// Orders routes (public endpoint for creating requests)
+app.use('/api/orders', ordersRoutes);
+// Owner orders routes
+app.use('/api/owner/orders', ordersRoutes);
+
 // ============================================
 // SERVER START
 // ============================================
