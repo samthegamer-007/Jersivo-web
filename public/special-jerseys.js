@@ -1,0 +1,9 @@
+const CATEGORY = 'Special jerseys';
+function toggleSidebar() {document.getElementById('sidebar').classList.toggle('active');document.getElementById('overlay').classList.toggle('active');}
+function navigate(path) {window.location.href = path;}
+function focusSearch() {document.getElementById('categorySearch').focus();}
+function handleSearch(event) {if (event.key === 'Enter') {const query = event.target.value.trim();window.location.href = query ? `/special-jerseys?q=${encodeURIComponent(query)}` : '/special-jerseys';}}
+function loadCartCount() {const cart = JSON.parse(localStorage.getItem('jersivoCart') || '[]');document.getElementById('cartCount').textContent = cart.length;}
+async function loadProducts() {try {const urlParams = new URLSearchParams(window.location.search);const searchQuery = urlParams.get('q');let url = `/api/products/search?category=${encodeURIComponent(CATEGORY)}`;if (searchQuery) {url += `&q=${encodeURIComponent(searchQuery)}`;document.getElementById('categorySearch').value = searchQuery;}const response = await fetch(url);const products = await response.json();const grid = document.getElementById('productsGrid');if (products.length === 0) {grid.innerHTML = '<div class="no-results"><h3>No jerseys found</h3><p>Try adjusting your search</p></div>';return;}grid.innerHTML = products.map(product => `<div class="product-card" onclick="viewProduct('${product.sku}')"><img src="${product.image1}" alt="${product.name}" class="product-image"><div class="product-info"><div class="product-name">${product.name}</div><div class="product-price">₹${product.price}</div></div></div>`).join('');} catch (error) {console.error('Error:', error);document.getElementById('productsGrid').innerHTML = '<div class="loading">Failed to load products.</div>';}}
+function viewProduct(sku) {console.log('View product:', sku);}
+document.addEventListener('DOMContentLoaded', function() {loadCartCount();loadProducts();});
