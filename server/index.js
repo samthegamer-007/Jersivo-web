@@ -197,6 +197,43 @@ app.use('/api/orders', ordersRoutes);
 // Owner orders routes
 app.use('/api/owner/orders', ordersRoutes);
 
+// Serve static HTML pages
+app.get('/club-jerseys', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/club-jerseys.html'));
+});
+
+app.get('/national-team', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/national-team.html'));
+});
+
+app.get('/retro-jerseys', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/retro-jerseys.html'));
+});
+
+app.get('/special-jerseys', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/special-jerseys.html'));
+});
+
+app.get('/other-apparel', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/other-apparel.html'));
+});
+
+app.get('/gifts', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/gifts.html'));
+});
+
+app.get('/cart', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/cart.html'));
+});
+
+app.get('/return-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/return-policy.html'));
+});
+
+app.get('/faqs', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/faqs.html'));
+});
+
 // ============================================
 // SERVER START
 // ============================================
