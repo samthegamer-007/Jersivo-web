@@ -5,6 +5,13 @@ const googleSheets = require('../googleSheets');
 const logger = require('../logger');
 const { getAllProducts, updateProduct } = require('../../database/products');
 const { updateSKUStatus } = require('../../database/sku');
+const {
+  getAllOrders,
+  getPendingRequests,
+  confirmOrder: dbConfirmOrder,
+  rejectOrder: dbRejectOrder,
+  getCustomerList
+} = require('../../database/orders');
 
 // ============================================
 // OWNER-ONLY ROUTES (Multi-Admin + Product Review)
@@ -12,13 +19,11 @@ const { updateSKUStatus } = require('../../database/sku');
 
 /**
  * GET /api/owner/delete-requests
- * Get all products marked as "Deleted" (awaiting owner review)
  */
 router.get('/delete-requests', auth.requireOwner, async (req, res) => {
   try {
     const products = await getAllProducts();
     const deleteRequests = products.filter(p => p.status === 'Deleted');
-    // Frontend expects { success, requests }
     res.json({ success: true, requests: deleteRequests });
   } catch (error) {
     console.error('Error fetching delete requests:', error);
@@ -28,14 +33,12 @@ router.get('/delete-requests', auth.requireOwner, async (req, res) => {
 
 /**
  * POST /api/owner/approve-delete
- * Accepts sku from body OR url param for compatibility
  */
 router.post('/approve-delete/:sku?', auth.requireOwner, async (req, res) => {
   try {
     const user = auth.getCurrentUser(req);
     const sku = req.params.sku || req.body.sku;
     if (!sku) return res.status(400).json({ error: 'sku required' });
-
     await updateSKUStatus(sku, 'Deleted');
     await logger.logDeleteApproved(user.username, sku);
     res.json({ success: true, message: 'Product deletion approved' });
@@ -47,14 +50,12 @@ router.post('/approve-delete/:sku?', auth.requireOwner, async (req, res) => {
 
 /**
  * POST /api/owner/deny-delete
- * Accepts sku from body OR url param for compatibility
  */
 router.post('/deny-delete/:sku?', auth.requireOwner, async (req, res) => {
   try {
     const user = auth.getCurrentUser(req);
     const sku = req.params.sku || req.body.sku;
     if (!sku) return res.status(400).json({ error: 'sku required' });
-
     await updateProduct(sku, { status: 'Live' }, 'OWNER_RESTORE');
     await logger.logDeleteDenied(user.username, sku);
     res.json({ success: true, message: 'Product restored to Live' });
@@ -65,21 +66,16 @@ router.post('/deny-delete/:sku?', auth.requireOwner, async (req, res) => {
 });
 
 // ============================================
-// MULTI-ADMIN MANAGEMENT (Keep from old system)
+// MULTI-ADMIN MANAGEMENT
 // ============================================
 
 /**
  * GET /api/owner/admins
- * Get all admins
  */
 router.get('/admins', auth.requireOwner, async (req, res) => {
   try {
     const credentials = await googleSheets.readCredentials();
-    
-    // Filter only admins (not owner)
     const admins = credentials.filter(c => c.role === 'ADMIN' || c.role === 'OWNER');
-    
-    // Don't send passwords
     const safeAdmins = admins.map(admin => ({
       username: admin.username,
       name: admin.name,
@@ -88,7 +84,6 @@ router.get('/admins', auth.requireOwner, async (req, res) => {
       created_at: admin.created_at,
       created_by: admin.created_by,
     }));
-    
     res.json({ success: true, admins: safeAdmins });
   } catch (error) {
     console.error('Error fetching admins:', error);
@@ -98,33 +93,27 @@ router.get('/admins', auth.requireOwner, async (req, res) => {
 
 /**
  * POST /api/owner/add-admin
- * Add new admin
  */
 router.post('/add-admin', auth.requireOwner, async (req, res) => {
   try {
     const user = auth.getCurrentUser(req);
     const { username, password, name } = req.body;
-    
+
     if (!username || !password || !name) {
-      return res.status(400).json({ 
-        error: 'Username, password, and name are required' 
+      return res.status(400).json({
+        error: 'Username, password, and name are required'
       });
     }
-    
-    // Check if username already exists
+
     const credentials = await googleSheets.readCredentials();
     const exists = credentials.some(c => c.username === username);
-    
+
     if (exists) {
-      return res.status(400).json({ 
-        error: 'Username already exists' 
-      });
+      return res.status(400).json({ error: 'Username already exists' });
     }
-    
-    // Hash password
+
     const hashedPassword = auth.hashPassword(password);
-    
-    // Create new admin credential
+
     await googleSheets.writeCredential({
       username,
       password: hashedPassword,
@@ -134,9 +123,8 @@ router.post('/add-admin', auth.requireOwner, async (req, res) => {
       created_at: new Date().toISOString(),
       created_by: user.username,
     });
-    
+
     await logger.logAdminAdded(user.username, username);
-    
     res.json({ success: true, message: 'Admin added successfully' });
   } catch (error) {
     console.error('Error adding admin:', error);
@@ -146,37 +134,32 @@ router.post('/add-admin', auth.requireOwner, async (req, res) => {
 
 /**
  * POST /api/owner/change-admin-password
- * Change admin password
  */
 router.post('/change-admin-password', auth.requireOwner, async (req, res) => {
   try {
     const user = auth.getCurrentUser(req);
     const { targetUsername, newPassword } = req.body;
-    
+
     if (!targetUsername || !newPassword) {
-      return res.status(400).json({ 
-        error: 'Target username and new password are required' 
+      return res.status(400).json({
+        error: 'Target username and new password are required'
       });
     }
-    
+
     const credentials = await googleSheets.readCredentials();
     const adminIndex = credentials.findIndex(c => c.username === targetUsername);
-    
+
     if (adminIndex === -1) {
       return res.status(404).json({ error: 'Admin not found' });
     }
-    
-    // Update password
+
     const hashedPassword = auth.hashPassword(newPassword);
-    credentials[adminIndex].password = hashedPassword;
-    
-    // Write back to sheet
+
     await googleSheets.updateCredential(targetUsername, {
       password: hashedPassword
     });
-    
+
     await logger.logPasswordChanged(user.username, targetUsername);
-    
     res.json({ success: true, message: 'Password changed successfully' });
   } catch (error) {
     console.error('Error changing password:', error);
@@ -186,30 +169,25 @@ router.post('/change-admin-password', auth.requireOwner, async (req, res) => {
 
 /**
  * POST /api/owner/block-admin
- * Block/unblock admin
  */
 router.post('/block-admin', auth.requireOwner, async (req, res) => {
   try {
     const user = auth.getCurrentUser(req);
     const { targetUsername, block } = req.body;
-    
+
     if (!targetUsername || typeof block !== 'boolean') {
-      return res.status(400).json({ 
-        error: 'Target username and block status required' 
+      return res.status(400).json({
+        error: 'Target username and block status required'
       });
     }
-    
+
     const newStatus = block ? 'BLOCKED' : 'ACTIVE';
-    
-    await googleSheets.updateCredential(targetUsername, {
-      status: newStatus
-    });
-    
+    await googleSheets.updateCredential(targetUsername, { status: newStatus });
     await logger.logAdminStatusChanged(user.username, targetUsername, newStatus);
-    
-    res.json({ 
-      success: true, 
-      message: `Admin ${block ? 'blocked' : 'unblocked'} successfully` 
+
+    res.json({
+      success: true,
+      message: `Admin ${block ? 'blocked' : 'unblocked'} successfully`
     });
   } catch (error) {
     console.error('Error blocking/unblocking admin:', error);
@@ -219,49 +197,35 @@ router.post('/block-admin', auth.requireOwner, async (req, res) => {
 
 /**
  * POST /api/owner/remove-admin
- * Permanently remove admin
  */
 router.post('/remove-admin', auth.requireOwner, async (req, res) => {
   try {
     const user = auth.getCurrentUser(req);
     const { targetUsername } = req.body;
-    
+
     if (!targetUsername) {
       return res.status(400).json({ error: 'Target username required' });
     }
-    
-    // Don't allow removing owner
+
     const credentials = await googleSheets.readCredentials();
     const targetAdmin = credentials.find(c => c.username === targetUsername);
-    
+
     if (!targetAdmin) {
       return res.status(404).json({ error: 'Admin not found' });
     }
-    
+
     if (targetAdmin.role === 'OWNER') {
       return res.status(403).json({ error: 'Cannot remove owner' });
     }
-    
-    // Remove admin
+
     await googleSheets.deleteCredential(targetUsername);
-    
     await logger.logAdminRemoved(user.username, targetUsername);
-    
     res.json({ success: true, message: 'Admin removed successfully' });
   } catch (error) {
     console.error('Error removing admin:', error);
     res.status(500).json({ error: 'Failed to remove admin' });
   }
 });
-
-const { getAllProducts } = require('../../database/products');
-const {
-  getAllOrders,
-  getPendingRequests,
-  confirmOrder: dbConfirmOrder,
-  rejectOrder: dbRejectOrder,
-  getCustomerList
-} = require('../../database/orders');
 
 /**
  * GET /api/owner/dashboard-stats
@@ -274,8 +238,8 @@ router.get('/dashboard-stats', auth.requireOwner, async (req, res) => {
       getPendingRequests()
     ]);
 
-    const activeAdmins  = credentials.filter(c => ['ADMIN','admin'].includes(c.role) && ['ACTIVE','active'].includes(c.status)).length;
-    const totalAdmins   = credentials.filter(c => ['ADMIN','admin'].includes(c.role)).length;
+    const activeAdmins = credentials.filter(c => ['ADMIN','admin'].includes(c.role) && ['ACTIVE','active'].includes(c.status)).length;
+    const totalAdmins = credentials.filter(c => ['ADMIN','admin'].includes(c.role)).length;
     const pendingDeletes = products.filter(p => p.status === 'Deleted').length;
 
     res.json({
@@ -370,9 +334,9 @@ router.get('/audit-logs', auth.requireOwner, async (req, res) => {
     const logs = await googleSheets.readLogs();
     const formatted = (logs || []).map(l => ({
       timestamp: l.timestamp || '',
-      username:  l.admin_id  || l.username || '',
-      action:    l.action    || '',
-      details:   l.details   || '',
+      username: l.admin_id || l.username || '',
+      action: l.action || '',
+      details: l.details || '',
     }));
     res.json({ success: true, logs: formatted });
   } catch (error) {
