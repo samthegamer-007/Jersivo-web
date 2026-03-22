@@ -41,7 +41,7 @@ async function checkAuth() {
         const response = await fetch('/api/check-session');
         const data = await response.json();
         
-        if (!data.authenticated || data.role !== 'admin') {
+        if (!data.authenticated || (data.role !== 'admin' && data.role !== 'ADMIN')) {
             window.location.href = '/admin-login.html';
             return;
         }
