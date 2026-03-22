@@ -1,7 +1,7 @@
 const googleSheets = require('../server/googleSheets');
 const { generateSKU, getSheetForCategory, getDisplayCategory, updateSKUStatus } = require('./sku');
 
-const PRODUCTS_DB_ID = process.env.SPREADSHEET_ID;
+const GOOGLE_SHEET_ID_PRODUCTS = process.env.SPREADSHEET_ID;
 
 /**
  * Add new product
