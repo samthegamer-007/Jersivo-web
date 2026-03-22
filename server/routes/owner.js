@@ -331,14 +331,27 @@ router.get('/customer-list', auth.requireOwner, async (req, res) => {
  */
 router.get('/audit-logs', auth.requireOwner, async (req, res) => {
   try {
-    const logs = await googleSheets.readLogs();
-    const formatted = (logs || []).map(l => ({
-      timestamp: l.timestamp || '',
-      username: l.admin_id || l.username || '',
-      action: l.action || '',
-      details: l.details || '',
+    const [authLogs, productLogs, ownerLogs] = await Promise.all([
+      googleSheets.readLogs('Authentication'),
+      googleSheets.readLogs('Product Actions'),
+      googleSheets.readLogs('Owner Actions')
+    ]);
+
+    const format = (logs) => (logs || []).map(l => ({
+      timestamp:  l.timestamp    || '',
+      username:   l.admin_id     || '',
+      action:     l.action       || '',
+      details:    l.details      || l.user_agent || '',
+      product_id: l.product_id   || l.affected_item || '',
     }));
-    res.json({ success: true, logs: formatted });
+
+    const allLogs = [
+      ...format(authLogs),
+      ...format(productLogs),
+      ...format(ownerLogs)
+    ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    res.json({ success: true, logs: allLogs });
   } catch (error) {
     console.error('Error fetching audit logs:', error);
     res.status(500).json({ error: 'Failed to fetch audit logs' });
