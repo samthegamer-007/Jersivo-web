@@ -30,7 +30,7 @@ async function checkAuth() {
         const response = await fetch('/api/check-session');
         const data = await response.json();
         
-        if (!data.authenticated || data.role !== 'owner') {
+        if (!data.authenticated || (data.role !== 'owner' && data.role !== 'OWNER')) {
             window.location.href = '/owner-login.html';
             return;
         }
