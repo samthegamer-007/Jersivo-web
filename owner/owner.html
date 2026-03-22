@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Control Center - Jersivo</title>
+    <style>
+        * {margin: 0; padding: 0; box-sizing: border-box;}
+        body {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background: #0a0a0a; color: #e5e5e5; line-height: 1.6;}
+        
+        /* HEADER */
+        .header {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);}
+        .header-title {font-size: 24px; font-weight: 800; color: white; display: flex; align-items: center; gap: 12px;}
+        .header-title::before {content: '👑'; font-size: 28px;}
+        .header-right {display: flex; gap: 16px; align-items: center;}
+        .username {color: white; font-weight: 600; font-size: 14px;}
+        .logout-btn {background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;}
+        .logout-btn:hover {background: rgba(255,255,255,0.3);}
+        
+        /* TABS */
+        .tabs-container {background: #1a1a1a; padding: 0 40px; border-bottom: 2px solid #2a2a2a; overflow-x: auto; white-space: nowrap;}
+        .tabs {display: flex; gap: 8px;}
+        .tab {padding: 16px 24px; cursor: pointer; color: #999; font-weight: 600; border-bottom: 3px solid transparent; transition: all 0.3s; font-size: 14px;}
+        .tab:hover {color: #e5e5e5; background: rgba(102, 126, 234, 0.1);}
+        .tab.active {color: #667eea; border-bottom-color: #667eea;}
+        .tab-badge {background: #f5576c; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 700;}
+        
+        /* MAIN CONTENT */
+        .content {padding: 40px;}
+        .tab-content {display: none;}
+        .tab-content.active {display: block;}
+        
+        /* STATS CARDS */
+        .stats-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 40px;}
+        .stat-card {background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 24px; transition: transform 0.3s;}
+        .stat-card:hover {transform: translateY(-4px); border-color: #667eea;}
+        .stat-label {color: #999; font-size: 14px; margin-bottom: 8px; font-weight: 500;}
+        .stat-value {font-size: 36px; font-weight: 800; color: #667eea;}
+        .stat-subtext {color: #666; font-size: 12px; margin-top: 8px;}
+        
+        /* SECTION */
+        .section {background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 32px; margin-bottom: 32px;}
+        .section-header {display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;}
+        .section-title {font-size: 22px; font-weight: 700; color: #fff;}
+        
+        /* BUTTONS */
+        .btn {padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 14px;}
+        .btn-primary {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;}
+        .btn-primary:hover {transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);}
+        .btn-success {background: #48bb78; color: white;}
+        .btn-success:hover {background: #38a169;}
+        .btn-danger {background: #f5576c; color: white;}
+        .btn-danger:hover {background: #e53e3e;}
+        .btn-secondary {background: #4a5568; color: white;}
+        .btn-secondary:hover {background: #2d3748;}
+        
+        /* TABLE */
+        .table-container {overflow-x: auto; margin-top: 24px;}
+        table {width: 100%; border-collapse: collapse;}
+        th {background: #2a2a2a; color: #999; text-align: left; padding: 16px; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;}
+        td {padding: 16px; border-bottom: 1px solid #2a2a2a; color: #e5e5e5;}
+        tr:hover {background: rgba(102, 126, 234, 0.05);}
+        .status-badge {display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 700;}
+        .status-pending {background: #f6ad55; color: #000;}
+        .status-active {background: #48bb78; color: white;}
+        .status-inactive {background: #718096; color: white;}
+        .status-deleted {background: #f5576c; color: white;}
+        .status-confirmed {background: #4299e1; color: white;}
+        
+        /* FORM */
+        .form-group {margin-bottom: 20px;}
+        .form-group label {display: block; color: #999; margin-bottom: 8px; font-weight: 600; font-size: 14px;}
+        .form-group input, .form-group select, .form-group textarea {width: 100%; padding: 12px 16px; background: #2a2a2a; border: 2px solid #3a3a3a; border-radius: 8px; color: #e5e5e5; font-size: 14px; transition: border-color 0.3s;}
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {outline: none; border-color: #667eea;}
+        .form-group textarea {resize: vertical; min-height: 100px;}
+        
+        /* MODAL */
+        .modal {display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;}
+        .modal.active {display: flex;}
+        .modal-content {background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 32px; position: relative;}
+        .modal-close {position: absolute; top: 16px; right: 16px; font-size: 28px; color: #999; cursor: pointer; transition: color 0.3s;}
+        .modal-close:hover {color: #fff;}
+        .modal-title {font-size: 24px; font-weight: 700; margin-bottom: 24px; color: #fff;}
+        
+        /* FILTER */
+        .filter-bar {display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;}
+        .filter-bar select, .filter-bar input {flex: 1; min-width: 200px; padding: 10px 16px; background: #2a2a2a; border: 2px solid #3a3a3a; border-radius: 8px; color: #e5e5e5;}
+        
+        /* LOADING */
+        .loading {text-align: center; padding: 60px 20px; color: #666; font-size: 16px;}
+        
+        /* EMPTY STATE */
+        .empty-state {text-align: center; padding: 60px 20px;}
+        .empty-state-icon {font-size: 64px; margin-bottom: 16px;}
+        .empty-state-title {font-size: 20px; font-weight: 600; color: #e5e5e5; margin-bottom: 8px;}
+        .empty-state-text {color: #666;}
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .header {padding: 16px 20px;}
+            .content {padding: 20px;}
+            .tabs-container {padding: 0 20px;}
+            .stats-grid {grid-template-columns: 1fr;}
+            .filter-bar {flex-direction: column;}
+            .filter-bar select, .filter-bar input {min-width: 100%;}
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-title">Owner Control Center</div>
+        <div class="header-right">
+            <span class="username" id="ownerUsername">Loading...</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <!-- TABS -->
+    <div class="tabs-container">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+            <div class="tab" onclick="switchTab('deleteRequests')">🗑️ Delete Requests<span class="tab-badge" id="deleteRequestsBadge">0</span></div>
+            <div class="tab" onclick="switchTab('manageAdmins')">👥 Manage Admins</div>
+            <div class="tab" onclick="switchTab('products')">📦 Products</div>
+            <div class="tab" onclick="switchTab('orders')">📋 Orders<span class="tab-badge" id="ordersBadge">0</span></div>
+            <div class="tab" onclick="switchTab('customerList')">📧 Customer List</div>
+            <div class="tab" onclick="switchTab('auditLogs')">📜 Audit Logs</div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content">
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Pending Deletes</div>
+                    <div class="stat-value" id="statPendingDeletes">0</div>
+                    <div class="stat-subtext">Products awaiting approval</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Admins</div>
+                    <div class="stat-value" id="statActiveAdmins">0</div>
+                    <div class="stat-subtext">Currently logged in</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Admins</div>
+                    <div class="stat-value" id="statTotalAdmins">0</div>
+                    <div class="stat-subtext">Active + Inactive</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending Orders</div>
+                    <div class="stat-value" id="statPendingOrders">0</div>
+                    <div class="stat-subtext">Awaiting confirmation</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DELETE REQUESTS TAB -->
+        <div id="deleteRequests" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Product Delete Requests</h2>
+                    <button class="btn btn-secondary" onclick="loadDeleteRequests()">🔄 Refresh</button>
+                </div>
+                <div id="deleteRequestsContent" class="loading">Loading delete requests...</div>
+            </div>
+        </div>
+
+        <!-- MANAGE ADMINS TAB -->
+        <div id="manageAdmins" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Admin Management</h2>
+                    <button class="btn btn-primary" onclick="openAddAdminModal()">+ Add Admin</button>
+                </div>
+                <div id="adminsContent" class="loading">Loading admins...</div>
+            </div>
+        </div>
+
+        <!-- PRODUCTS TAB -->
+        <div id="products" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Product Oversight</h2>
+                    <button class="btn btn-secondary" onclick="loadProducts()">🔄 Refresh</button>
+                </div>
+                <div class="filter-bar">
+                    <select id="productCategoryFilter" onchange="filterProducts()">
+                        <option value="">All Categories</option>
+                        <option value="Club jerseys">Club Jerseys</option>
+                        <option value="National team jerseys">National Team Jerseys</option>
+                        <option value="Retro jerseys">Retro Jerseys</option>
+                        <option value="Special jerseys">Special Jerseys</option>
+                        <option value="Other apparel">Other Apparel</option>
+                        <option value="Gifts">Gifts</option>
+                    </select>
+                    <select id="productStatusFilter" onchange="filterProducts()">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="pendingDelete">Pending Delete</option>
+                        <option value="deleted">Deleted</option>
+                    </select>
+                </div>
+                <div id="productsContent" class="loading">Loading products...</div>
+            </div>
+        </div>
+
+        <!-- ORDERS TAB -->
+        <div id="orders" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Order Management</h2>
+                    <button class="btn btn-secondary" onclick="loadOrders()">🔄 Refresh</button>
+                </div>
+                <div class="filter-bar">
+                    <select id="orderStatusFilter" onchange="filterOrders()">
+                        <option value="pending">Pending Orders</option>
+                        <option value="confirmed">Confirmed Orders</option>
+                        <option value="all">All Orders</option>
+                    </select>
+                </div>
+                <div id="ordersContent" class="loading">Loading orders...</div>
+            </div>
+        </div>
+
+        <!-- CUSTOMER LIST TAB -->
+        <div id="customerList" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Customer List</h2>
+                    <button class="btn btn-success" onclick="exportCustomerList()">📥 Export CSV</button>
+                </div>
+                <div id="customerListContent" class="loading">Loading customer list...</div>
+            </div>
+        </div>
+
+        <!-- AUDIT LOGS TAB -->
+        <div id="auditLogs" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Audit Logs</h2>
+                    <button class="btn btn-secondary" onclick="loadAuditLogs()">🔄 Refresh</button>
+                </div>
+                <div class="filter-bar">
+                    <select id="logActionFilter" onchange="filterAuditLogs()">
+                        <option value="">All Actions</option>
+                        <option value="login">Authentication</option>
+                        <option value="product">Product Actions</option>
+                        <option value="admin">Admin Management</option>
+                        <option value="order">Order Actions</option>
+                        <option value="sku">SKU Generation</option>
+                    </select>
+                    <input type="text" id="logAdminFilter" placeholder="Filter by admin..." onkeyup="filterAuditLogs()">
+                    <input type="date" id="logDateFilter" onchange="filterAuditLogs()">
+                </div>
+                <div id="auditLogsContent" class="loading">Loading audit logs...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD ADMIN MODAL -->
+    <div id="addAdminModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeAddAdminModal()">&times;</span>
+            <h2 class="modal-title">Add New Admin</h2>
+            <form id="addAdminForm" onsubmit="addAdmin(event)">
+                <div class="form-group">
+                    <label>Username *</label>
+                    <input type="text" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" name="password" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select name="role" required>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/owner.js"></script>
+</body>
+</html>
