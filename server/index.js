@@ -245,6 +245,18 @@ syncProductsToCache('Sheet1').then(() => {
   console.error('❌ Initial sync failed:', err);
 });
 
+// ==========================================
+// LOGIN PAGE ROUTES
+// ==========================================
+
+app.get('/owner-login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/owner-login.html'));
+});
+
+app.get('/admin-login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admin-login.html'));
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Jersivo server running on port ${PORT}`);
