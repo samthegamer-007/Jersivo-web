@@ -1,4 +1,4 @@
-// admin5.js - Admin Panel JavaScript with SKU Preview
+// admin.js - Admin Panel JavaScript
 
 let allProducts = [];
 let currentTab = 'addProduct';
@@ -65,14 +65,10 @@ function logout() {
 // ==========================================
 
 function switchTab(tabName) {
-    // Update active tab
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     event.currentTarget.classList.add('active');
-    
-    // Update active content
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     document.getElementById(tabName).classList.add('active');
-    
     currentTab = tabName;
 }
 
@@ -92,8 +88,19 @@ function updateSKUPreview() {
     
     const prefix = CATEGORY_PREFIX[category];
     const previewSKU = `${prefix}-XXX-${teamCode}`;
-    
     document.getElementById('skuPreview').textContent = previewSKU;
+}
+
+// ==========================================
+// LABEL SELECTOR
+// ==========================================
+
+function toggleLabel(el, groupId) {
+    el.classList.toggle('selected');
+    const selected = Array.from(document.querySelectorAll(`#${groupId} .label-option.selected`))
+        .map(o => o.dataset.value);
+    const inputId = groupId === 'addLabelGroup' ? 'addLabelValue' : 'editLabelValue';
+    document.getElementById(inputId).value = selected.join(',');
 }
 
 // ==========================================
@@ -112,7 +119,7 @@ async function addProduct(event) {
         image1: formData.get('image1'),
         image2: formData.get('image2'),
         description: formData.get('description'),
-        featured: formData.get('featured') === 'on'
+        label: formData.get('label') || ''
     };
     
     try {
@@ -127,6 +134,8 @@ async function addProduct(event) {
         if (data.success) {
             alert(`Product added successfully!\nSKU: ${data.sku}`);
             event.target.reset();
+            document.querySelectorAll('#addLabelGroup .label-option').forEach(o => o.classList.remove('selected'));
+            document.getElementById('addLabelValue').value = '';
             document.getElementById('skuPreview').textContent = '—';
             await loadProducts();
         } else {
@@ -174,7 +183,6 @@ function filterProducts() {
     const statusFilter = document.getElementById('statusFilter').value;
     
     let filtered = allProducts.filter(p => {
-        // Search filter
         if (searchTerm) {
             const matchesSearch = 
                 p.name.toLowerCase().includes(searchTerm) ||
@@ -182,14 +190,9 @@ function filterProducts() {
                 (p.teamCode && p.teamCode.toLowerCase().includes(searchTerm));
             if (!matchesSearch) return false;
         }
-        
-        // Category filter
         if (categoryFilter && p.category !== categoryFilter) return false;
-        
-        // Status filter
-        if (statusFilter === 'active' && p.status !== 'active') return false;
-        if (statusFilter === 'deleted' && p.status !== 'deleted') return false;
-        
+        if (statusFilter === 'Live' && p.status !== 'Live') return false;
+        if (statusFilter === 'Deleted' && p.status !== 'Deleted') return false;
         return true;
     });
     
@@ -216,12 +219,14 @@ function displayProducts(products) {
     products.forEach(product => {
         let badges = '';
         
-        if (product.status === 'deleted') {
+        if (product.status === 'Deleted') {
             badges = '<span class="status-badge status-deleted">DELETED</span>';
         } else {
             badges = '<span class="status-badge status-active">ACTIVE</span>';
-            if (product.featured) {
-                badges += ' <span class="status-badge status-featured">FEATURED</span>';
+            if (product.label) {
+                product.label.split(',').forEach(l => {
+                    if (l.trim()) badges += ` <span class="status-badge status-featured">${l.trim()}</span>`;
+                });
             }
         }
         
@@ -233,7 +238,7 @@ function displayProducts(products) {
                 <td>₹${product.price}</td>
                 <td>${badges}</td>
                 <td>
-                    ${product.status === 'active' 
+                    ${product.status !== 'Deleted'
                         ? `
                             <button class="btn btn-success" onclick='openEditModal(${JSON.stringify(product).replace(/'/g, "&apos;")})'>Edit</button>
                             <button class="btn btn-danger" onclick="deleteProduct('${product.sku}')">Delete</button>
@@ -260,14 +265,25 @@ function openEditModal(product) {
     document.getElementById('editImage1').value = product.image1;
     document.getElementById('editImage2').value = product.image2;
     document.getElementById('editDescription').value = product.description || '';
-    document.getElementById('editFeatured').checked = product.featured || false;
-    
+
+    const existingLabels = (product.label || '').split(',').map(l => l.trim());
+    document.querySelectorAll('#editLabelGroup .label-option').forEach(opt => {
+        if (existingLabels.includes(opt.dataset.value)) {
+            opt.classList.add('selected');
+        } else {
+            opt.classList.remove('selected');
+        }
+    });
+    document.getElementById('editLabelValue').value = product.label || '';
+
     document.getElementById('editProductModal').classList.add('active');
 }
 
 function closeEditModal() {
     document.getElementById('editProductModal').classList.remove('active');
     document.getElementById('editProductForm').reset();
+    document.querySelectorAll('#editLabelGroup .label-option').forEach(o => o.classList.remove('selected'));
+    document.getElementById('editLabelValue').value = '';
 }
 
 async function updateProduct(event) {
@@ -281,7 +297,7 @@ async function updateProduct(event) {
         image1: formData.get('image1'),
         image2: formData.get('image2'),
         description: formData.get('description'),
-        featured: formData.get('featured') === 'on'
+        label: formData.get('label') || ''
     };
     
     try {
@@ -330,4 +346,4 @@ async function deleteProduct(sku) {
         console.error('Delete product failed:', error);
         alert('Failed to delete product');
     }
-}
+            }
