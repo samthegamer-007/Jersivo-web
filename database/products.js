@@ -47,7 +47,7 @@ async function addProduct(productData, username) {
     ];
     
     // Write to Sheet1
-    await googleSheets.appendToSheet('Sheet1', [globalRow], GOOGLE_SHEET_ID_CREDENTIALS);
+    await googleSheets.appendToSheet('Sheet1', [globalRow], PRODUCTS_DB_ID);
     console.log(`✅ Added to Sheet1: ${sku}`);
     
     // Prepare data for category sheet (9 columns)
@@ -65,7 +65,7 @@ async function addProduct(productData, username) {
     
     // Write to category-specific sheet
     const categorySheet = getSheetForCategory(category);
-    await googleSheets.appendToSheet(categorySheet, [categoryRow], GOOGLE_SHEET_ID_CREDENTIALS);
+    await googleSheets.appendToSheet(categorySheet, [categoryRow], PRODUCTS_DB_ID);
     console.log(`✅ Added to ${categorySheet}: ${sku}`);
     
     return {
@@ -88,7 +88,7 @@ async function addProduct(productData, username) {
 async function updateProduct(sku, updates, username) {
   try {
     // Read Sheet1 to find the product
-    const globalProducts = await googleSheets.readFromSheet('Sheet1', GOOGLE_SHEET_ID_CREDENTIALS);
+    const globalProducts = await googleSheets.readFromSheet('Sheet1', PRODUCTS_DB_ID);
     const productIndex = globalProducts.findIndex(row => row[0] === sku);
     
     if (productIndex === -1) {
@@ -136,12 +136,12 @@ async function updateProduct(sku, updates, username) {
     ];
     
     // Update Sheet1
-    await googleSheets.updateRow('Sheet1', productIndex + 2, globalRow, GOOGLE_SHEET_ID_CREDENTIALS);
+    await googleSheets.updateRow('Sheet1', productIndex + 2, globalRow, PRODUCTS_DB_ID);
     console.log(`✅ Updated Sheet1: ${sku}`);
     
     // Handle category sheet based on status change
     const categorySheet = getSheetForCategory(category);
-    const categoryProducts = await googleSheets.readFromSheet(categorySheet, GOOGLE_SHEET_ID_CREDENTIALS);
+    const categoryProducts = await googleSheets.readFromSheet(categorySheet, PRODUCTS_DB_ID);
     const categoryIndex = categoryProducts.findIndex(row => row[0] === sku);
     
     const newStatus = globalUpdates.status;
@@ -162,7 +162,7 @@ async function updateProduct(sku, updates, username) {
           globalUpdates.label           // label
         ];
         
-        await googleSheets.appendToSheet(categorySheet, [categoryRow], GOOGLE_SHEET_ID_CREDENTIALS);
+        await googleSheets.appendToSheet(categorySheet, [categoryRow], PRODUCTS_DB_ID);
         console.log(`✅ Restored to ${categorySheet}: ${sku}`);
       } else {
         // Already exists in category sheet, just update it
@@ -178,7 +178,7 @@ async function updateProduct(sku, updates, username) {
           globalUpdates.label
         ];
         
-        await googleSheets.updateRow(categorySheet, categoryIndex + 2, categoryRow, GOOGLE_SHEET_ID_CREDENTIALS);
+        await googleSheets.updateRow(categorySheet, categoryIndex + 2, categoryRow, PRODUCTS_DB_ID);
         console.log(`✅ Updated ${categorySheet}: ${sku}`);
       }
     } 
@@ -196,7 +196,7 @@ async function updateProduct(sku, updates, username) {
         globalUpdates.label
       ];
       
-      await googleSheets.updateRow(categorySheet, categoryIndex + 2, categoryRow, GOOGLE_SHEET_ID_CREDENTIALS);
+      await googleSheets.updateRow(categorySheet, categoryIndex + 2, categoryRow, PRODUCTS_DB_ID);
       console.log(`✅ Updated ${categorySheet}: ${sku}`);
     }
     
@@ -218,7 +218,7 @@ async function updateProduct(sku, updates, username) {
 async function deleteProduct(sku, username) {
   try {
     // Read Sheet1
-    const globalProducts = await googleSheets.readFromSheet('Sheet1', GOOGLE_SHEET_ID_CREDENTIALS);
+    const globalProducts = await googleSheets.readFromSheet('Sheet1', PRODUCTS_DB_ID);
     const productIndex = globalProducts.findIndex(row => row[0] === sku);
     
     if (productIndex === -1) {
@@ -235,16 +235,16 @@ async function deleteProduct(sku, username) {
     globalRow[13] = timestamp; // last_modified_at
     globalRow[14] = username;  // last_modified_by
     
-    await googleSheets.updateRow('Sheet1', productIndex + 2, globalRow, GOOGLE_SHEET_ID_CREDENTIALS);
+    await googleSheets.updateRow('Sheet1', productIndex + 2, globalRow, PRODUCTS_DB_ID);
     console.log(`✅ Marked as deleted in Sheet1: ${sku}`);
     
     // Remove from category sheet
     const categorySheet = getSheetForCategory(category);
-    const categoryProducts = await googleSheets.readFromSheet(categorySheet, GOOGLE_SHEET_ID_CREDENTIALS);
+    const categoryProducts = await googleSheets.readFromSheet(categorySheet, PRODUCTS_DB_ID);
     const categoryIndex = categoryProducts.findIndex(row => row[0] === sku);
     
     if (categoryIndex !== -1) {
-      await googleSheets.deleteRow(categorySheet, categoryIndex + 2, GOOGLE_SHEET_ID_CREDENTIALS);
+      await googleSheets.deleteRow(categorySheet, categoryIndex + 2, PRODUCTS_DB_ID);
       console.log(`✅ Removed from ${categorySheet}: ${sku}`);
     }
     
