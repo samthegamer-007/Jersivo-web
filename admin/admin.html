@@ -53,8 +53,12 @@
         .form-group input, .form-group select, .form-group textarea {width: 100%; padding: 12px 16px; background: #2a2a2a; border: 2px solid #3a3a3a; border-radius: 8px; color: #e5e5e5; font-size: 14px; transition: border-color 0.3s;}
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus {outline: none; border-color: #667eea;}
         .form-group textarea {resize: vertical; min-height: 100px;}
-        .checkbox-group {display: flex; align-items: center; gap: 8px;}
-        .checkbox-group input[type="checkbox"] {width: auto; cursor: pointer;}
+
+        /* LABEL SELECTOR */
+        .label-select-group {display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;}
+        .label-option {padding: 6px 14px; border-radius: 20px; border: 2px solid #3a3a3a; background: #2a2a2a; color: #999; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none;}
+        .label-option:hover {border-color: #667eea; color: #fff;}
+        .label-option.selected {border-color: #667eea; background: rgba(102,126,234,0.2); color: #667eea;}
         
         /* SKU PREVIEW */
         .sku-preview {background: #2a2a2a; border: 2px solid #667eea; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 20px;}
@@ -101,11 +105,6 @@
             .form-grid {grid-template-columns: 1fr;}
             .filter-bar {flex-direction: column;}
             .filter-bar input, .filter-bar select {min-width: 100%;}
-
-            label-select-group {display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;}
-.label-option {padding: 6px 14px; border-radius: 20px; border: 2px solid #3a3a3a; background: #2a2a2a; color: #999; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none;}
-.label-option:hover {border-color: #667eea; color: #fff;}
-.label-option.selected {border-color: #667eea; background: rgba(102,126,234,0.2); color: #667eea;}
         }
     </style>
 </head>
@@ -207,10 +206,14 @@
                             <textarea name="description" placeholder="Product description..."></textarea>
                         </div>
                         <div class="form-group full-width">
-                            <div class="checkbox-group">
-                                <input type="checkbox" name="featured" id="featuredCheckbox">
-                                <label for="featuredCheckbox" style="margin: 0;">⭐ Feature this product on homepage</label>
+                            <label>Labels</label>
+                            <div class="label-select-group" id="addLabelGroup">
+                                <div class="label-option" data-value="FEATURED" onclick="toggleLabel(this, 'addLabelGroup')">⭐ FEATURED</div>
+                                <div class="label-option" data-value="BEST SELLER" onclick="toggleLabel(this, 'addLabelGroup')">🔥 BEST SELLER</div>
+                                <div class="label-option" data-value="ON SALE" onclick="toggleLabel(this, 'addLabelGroup')">💸 ON SALE</div>
+                                <div class="label-option" data-value="HOT" onclick="toggleLabel(this, 'addLabelGroup')">❤️ HOT</div>
                             </div>
+                            <input type="hidden" name="label" id="addLabelValue">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Add Product</button>
@@ -237,9 +240,9 @@
                         <option value="Gifts">Gifts</option>
                     </select>
                     <select id="statusFilter" onchange="filterProducts()">
-                        <option value="active">Active Only</option>
+                        <option value="Live">Active Only</option>
                         <option value="all">All Status</option>
-                        <option value="deleted">Deleted Only</option>
+                        <option value="Deleted">Deleted Only</option>
                     </select>
                 </div>
                 <div id="productsContent" class="loading">Loading products...</div>
@@ -276,10 +279,14 @@
                         <textarea name="description" id="editDescription"></textarea>
                     </div>
                     <div class="form-group full-width">
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="featured" id="editFeatured">
-                            <label for="editFeatured" style="margin: 0;">⭐ Feature this product on homepage</label>
+                        <label>Labels</label>
+                        <div class="label-select-group" id="editLabelGroup">
+                            <div class="label-option" data-value="FEATURED" onclick="toggleLabel(this, 'editLabelGroup')">⭐ FEATURED</div>
+                            <div class="label-option" data-value="BEST SELLER" onclick="toggleLabel(this, 'editLabelGroup')">🔥 BEST SELLER</div>
+                            <div class="label-option" data-value="ON SALE" onclick="toggleLabel(this, 'editLabelGroup')">💸 ON SALE</div>
+                            <div class="label-option" data-value="HOT" onclick="toggleLabel(this, 'editLabelGroup')">❤️ HOT</div>
                         </div>
+                        <input type="hidden" name="label" id="editLabelValue">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Update Product</button>
@@ -289,4 +296,4 @@
 
     <script src="/js/admin.js"></script>
 </body>
-</html>
+                                    </html>
