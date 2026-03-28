@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jersivo - Premium Football Jerseys</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --text-dark: #1a202c;
+            --text-medium: #4a5568;
+            --text-light: #718096;
+            --bg-light: #f7fafc;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            background: white;
+            padding: 16px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .hamburger {
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .hamburger:hover {
+            opacity: 0.7;
+        }
+
+        .logo {
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .nav-icon:hover {
+            opacity: 0.7;
+        }
+
+        .cart-badge {
+            position: relative;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f5576c;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        /* ===== SIDEBAR MENU ===== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.1);
+            transition: left 0.3s ease;
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-close {
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-medium);
+        }
+
+        .sidebar-menu {
+            padding: 24px;
+        }
+
+        .menu-item {
+            padding: 14px 0;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: color 0.3s;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .menu-item:hover {
+            color: #667eea;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1500;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), 
+                        url('https://res.cloudinary.com/dds7d6yvs/image/upload/v1774122071/pexels-scgough-19186210_sru0l5.jpg') center/cover;
+            padding: 80px 24px;
+            text-align: center;
+            color: white;
+        }
+
+        .hero-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 32px;
+            opacity: 0.95;
+        }
+
+        .hero-btn {
+            background: white;
+            color: #667eea;
+            padding: 16px 40px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .hero-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        /* ===== SEARCH BAR ===== */
+        .search-section {
+            max-width: 800px;
+            margin: -30px auto 60px;
+            padding: 0 24px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+        }
+
+        .search-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: var(--text-dark);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-light);
+        }
+
+        /* ===== FEATURED SECTION ===== */
+        .featured-section {
+            padding: 60px 24px;
+            background: var(--bg-light);
+        }
+
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .scroll-container {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 16px;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .scroll-container::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        .product-card {
+            min-width: 280px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            background: var(--bg-light);
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-label {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .product-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        /* ===== SHOP BY TEAM SECTION ===== */
+        .shop-team-section {
+            padding: 60px 24px;
+            background: white;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .team-grid.collapsed {
+            max-height: 400px;
+            overflow: hidden;
+        }
+
+        .team-logo-card {
+            aspect-ratio: 1;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 20px;
+        }
+
+        .team-logo-card:hover {
+            transform: translateY(-4px);
+            border-color: #667eea;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .team-logo {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .show-all-btn {
+            margin-top: 32px;
+            text-align: center;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: #1a202c;
+            color: white;
+            padding: 60px 24px 24px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .footer-link {
+            display: block;
+            color: #cbd5e0;
+            text-decoration: none;
+            margin-bottom: 12px;
+            transition: color 0.3s;
+        }
+
+        .footer-link:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero p {
+                font-size: 18px;
+            }
+
+            .section-title {
+                font-size: 24px;
+            }
+
+            .team-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 16px;
+            }
+
+            .product-card {
+                min-width: 240px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107418/hamburger-menu-svgrepo-com_xruuis.svg" 
+                     alt="Menu" 
+                     class="hamburger" 
+                     onclick="toggleSidebar()">
+                <img src="https://res.cloudinary.com/dqhbkzjje/image/upload/v1771114488/IMG_20251216_124322_701_f3tjfh.png" 
+                     alt="Jersivo" 
+                     class="logo" 
+                     onclick="window.location.href='/'">
+            </div>
+            <div class="nav-right">
+                <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107418/search-svgrepo-com_r8vxxa.svg" 
+                     alt="Search" 
+                     class="nav-icon"
+                     onclick="focusSearch()">
+                <div class="cart-badge">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107418/cart-shopping-svgrepo-com_rzqcdc.svg" 
+                         alt="Cart" 
+                         class="nav-icon"
+                         onclick="window.location.href='/cart'">
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SIDEBAR MENU -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-close" onclick="toggleSidebar()">&times;</span>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-item" onclick="navigate('/club-jerseys')">Club Jerseys</div>
+            <div class="menu-item" onclick="navigate('/national-team')">National Team Jerseys</div>
+            <div class="menu-item" onclick="navigate('/special-jerseys')">Special Jerseys</div>
+            <div class="menu-item" onclick="navigate('/retro-jerseys')">Retro Jerseys</div>
+            <div class="menu-item" onclick="navigate('/other-apparel')">Other Apparel</div>
+            <div class="menu-item" onclick="navigate('/gifts')">Gifts</div>
+        </div>
+    </div>
+
+    <!-- OVERLAY -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="hero-container">
+            <h1>Premium Football Jerseys</h1>
+            <p>Authentic designs, unbeatable quality. Your team, your style.</p>
+            <a href="#shop-teams" class="hero-btn">Shop Now</a>
+        </div>
+    </section>
+
+    <!-- SEARCH BAR -->
+    <div class="search-section">
+        <div class="search-container">
+            <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107418/search-svgrepo-com_r8vxxa.svg" 
+                 alt="Search" 
+                 class="search-icon">
+            <input type="text" 
+                   class="search-input" 
+                   id="homeSearch"
+                   placeholder="Search for teams, jerseys, or players..."
+                   onkeypress="handleSearch(event)">
+        </div>
+    </div>
+
+    <!-- FEATURED SECTION -->
+    <section class="featured-section">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Featured Jerseys</h2>
+            </div>
+            <div class="scroll-container" id="featuredContainer">
+                <div class="loading">Loading featured products...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SHOP BY TEAM SECTION -->
+    <section class="shop-team-section" id="shop-teams">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">Shop current season jerseys by Team</h2>
+            </div>
+            <div class="team-grid collapsed" id="teamGrid">
+                <!-- Team logos -->
+                <div class="team-logo-card" onclick="searchTeam('Barcelona')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107422/fc-barcelona-logo-svgrepo-com_xdzh3d.svg" alt="Barcelona" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Real Madrid')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107424/spain_real-madrid.football-logos.cc_xlnsud.svg" alt="Real Madrid" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Man United')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107420/manchester-united-logo-svgrepo-com_qgetj6.svg" alt="Man United" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Liverpool')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107447/england_liverpool.football-logos.cc_tmoqmc.svg" alt="Liverpool" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Bayern Munich')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107455/germany_bayern-munchen.football-logos.cc_ghk5po.svg" alt="Bayern Munich" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('PSG')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107455/france_paris-saint-germain.football-logos.cc_nmcfdh.svg" alt="PSG" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Chelsea')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107430/england_chelsea.football-logos.cc_kp8hru.svg" alt="Chelsea" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Arsenal')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107425/england_arsenal.football-logos.cc_sv2wwt.svg" alt="Arsenal" class="team-logo">
+                </div>
+                <!-- Hidden initially -->
+                <div class="team-logo-card" onclick="searchTeam('Man City')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107452/england_manchester-city.football-logos.cc_teumpd.svg" alt="Man City" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Juventus')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107458/italy_juventus.football-logos.cc_tx8vth.svg" alt="Juventus" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Inter Milan')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107456/italy_inter.football-logos.cc_fonldk.svg" alt="Inter Milan" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Dortmund')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107455/germany_borussia-dortmund.football-logos.cc_e3zdm5.svg" alt="Dortmund" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Tottenham')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107455/england_tottenham.football-logos.cc_iyxiwq.svg" alt="Tottenham" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Atletico Madrid')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107423/spain_atletico-madrid.football-logos.cc_kq6ril.svg" alt="Atletico Madrid" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Inter Miami')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774108682/usa_inter-miami-cf.football-logos.cc_agy4f3.svg" alt="Inter Miami" class="team-logo">
+                </div>
+                <!-- National Teams -->
+                <div class="team-logo-card" onclick="searchTeam('Argentina')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107422/argentina_argentina-national-team.football-logos.cc_dmot6i.svg" alt="Argentina" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Brazil')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107421/brazil_brazil-national-team.football-logos.cc_bpt8sv.svg" alt="Brazil" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('France')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107418/france_france-national-team.football-logos.cc_kklihx.svg" alt="France" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Spain')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107420/spain_spain-national-team.football-logos.cc_b5vsrt.svg" alt="Spain" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('England')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107420/england_england-national-team.football-logos.cc_cotwg7.svg" alt="England" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Germany')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107418/germany_germany-national-team.football-logos.cc_qeiqsx.svg" alt="Germany" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Portugal')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107419/portugal_portuguese-football-federation.football-logos.cc_njslbw.svg" alt="Portugal" class="team-logo">
+                </div>
+                <div class="team-logo-card" onclick="searchTeam('Netherlands')">
+                    <img src="https://res.cloudinary.com/dds7d6yvs/image/upload/v1774107422/netherlands_dutch-national-team.football-logos.cc_ju5xwr.svg" alt="Netherlands" class="team-logo">
+                </div>
+            </div>
+            <div class="show-all-btn">
+                <button class="btn-secondary" id="showAllBtn" onclick="toggleTeams()">Show All Teams</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h3>Customer Service</h3>
+                    <a href="/return-policy" class="footer-link">Return Policy</a>
+                    <a href="/faqs" class="footer-link">FAQs</a>
+                </div>
+                <div class="footer-column">
+                    <h3>Follow Us</h3>
+                    <a href="https://instagram.com/shop.jersivo" target="_blank" class="footer-link">@shop.jersivo</a>
+                    <a href="https://instagram.com/jersivo.community" target="_blank" class="footer-link">@jersivo.community</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                © 2026 Jersivo. Do not replicate.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        // Navigate
+        function navigate(path) {
+            window.location.href = path;
+        }
+
+        // Focus search
+        function focusSearch() {
+            document.getElementById('homeSearch').focus();
+        }
+
+        // Handle search
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                const query = event.target.value.trim();
+                if (query) {
+                    window.location.href = `/?q=${encodeURIComponent(query)}`;
+                }
+            }
+        }
+
+        // Search team (determines if club or national)
+        function searchTeam(teamName) {
+            const nationalTeams = ['Argentina', 'Brazil', 'France', 'Spain', 'England', 'Germany', 'Portugal', 'Netherlands'];
+            
+            if (nationalTeams.includes(teamName)) {
+                window.location.href = `/national-team?q=${encodeURIComponent(teamName)}`;
+            } else {
+                window.location.href = `/club-jerseys?q=${encodeURIComponent(teamName)}`;
+            }
+        }
+
+        // Toggle teams grid
+        let teamsExpanded = false;
+        function toggleTeams() {
+            const grid = document.getElementById('teamGrid');
+            const btn = document.getElementById('showAllBtn');
+            
+            teamsExpanded = !teamsExpanded;
+            
+            if (teamsExpanded) {
+                grid.classList.remove('collapsed');
+                btn.textContent = 'Show Less';
+            } else {
+                grid.classList.add('collapsed');
+                btn.textContent = 'Show All Teams';
+                document.getElementById('shop-teams').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Load cart count
+        function loadCartCount() {
+            const cart = JSON.parse(localStorage.getItem('jersivoCart') || '[]');
+            document.getElementById('cartCount').textContent = cart.length;
+        }
+
+        // Initialize
+        loadCartCount();
+    </script>
+</body>
+</html>
