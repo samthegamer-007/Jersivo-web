@@ -16,8 +16,8 @@ async function searchProducts(options = {}) {
     
     // Read all products from Sheet1
     const allProducts = await readFromSheet(
-      process.env.GOOGLE_SHEET_ID_PRODUCTS,
-      'Sheet1!A2:K'
+      'Sheet1',
+      process.env.GOOGLE_SHEET_ID_PRODUCTS
     );
     
     if (!allProducts || allProducts.length === 0) {
