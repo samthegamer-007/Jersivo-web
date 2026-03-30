@@ -26,17 +26,20 @@ async function searchProducts(options = {}) {
     
     // Parse products
     let products = allProducts.map(row => ({
-      sku: row[0] || '',
-      name: row[1] || '',
-      category: row[2] || '',
-      price: row[3] || '',
-      image1: row[4] || '',
-      image2: row[5] || '',
-      description: row[6] || '',
-      teamCode: row[7] || '',
-      status: row[8] || 'active',
-      featured: row[9] === 'TRUE' || row[9] === true,
-      lastModified: row[10] || ''
+      sku: row[0] || '',           // A: id
+      name: row[1] || '',           // B: name
+      price: row[2] || '',          // C: price
+      category: row[3] || '',       // D: category
+      image1: row[4] || '',         // E: image1
+      image2: row[5] || '',         // F: image2
+      description: row[6] || '',    // G: description
+      customizable: row[7] || '',   // H: customizable
+      sizes: row[8] || '',          // I: sizes
+      label: row[9] || '',          // J: label
+      status: row[10] || 'active',  // K: status
+      featured: row[9] === 'HOT' || row[9] === 'NEW' || row[9] === 'BESTSELLER',  // J: label treated as featured
+      teamCode: '',                 // Not in spreadsheet
+      lastModified: row[13] || ''   // N: last_modified_at
     }));
     
     // Filter out deleted/inactive products
