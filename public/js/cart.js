@@ -6,7 +6,7 @@ const SHIPPING = {
   'delhivery_prepaid': { label: 'Delhivery Prepaid', desc: 'Reliable courier – Prepaid', cod: false, feeUnder: 55, feeFree: 0 },
   'delhivery_cod': { label: 'Delhivery COD', desc: 'Cash on Delivery – fee paid online', cod: true, feeUnder: 75, feeFree: 0 },
 };
-const FREE_THRESHOLD = 1100;
+const FREE_THRESHOLD = 1200;
 
 let selectedShipping = 'india_post';
 
@@ -93,7 +93,7 @@ function renderCart() {
         <div class="total-row grand"><span>Total</span><span id="total-display">₹${total.toLocaleString('en-IN')}</span></div>
       </div>
 
-      <button class="proceed-btn" id="proceed-btn">Proceed to Instagram →</button>
+      <button class="proceed-btn" id="proceed-btn">Copy details and Proceed to Instagram →</button>
     </div>`;
 
   // Qty buttons
@@ -174,7 +174,7 @@ async function handleProceed() {
   const total = subtotal + shippingFee;
 
   const btn = document.getElementById('proceed-btn');
-  btn.textContent = 'Creating order...';
+  btn.textContent = 'Processing...';
   btn.disabled = true;
 
   try {
@@ -188,20 +188,54 @@ async function handleProceed() {
         items: cart.map(i => ({ sku: i.sku, name: i.name, size: i.size, qty: i.qty, price: i.price }))
       })
     });
+
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed');
 
-    // Build Instagram DM message
     const orderNo = data.order_no;
-    const itemLines = cart.map(i => `• ${i.name} | Size: ${i.size} | Qty: ${i.qty} | ₹${i.price}`).join('\n');
-    const msg = `Hi! I'd like to place an order.\n\n` +
-      `Order No: ${orderNo}\n\n` +
-      `ITEMS:\n${itemLines}\n\n` +
-      `Subtotal: ₹${subtotal}\nShipping: ${shippingFee === 0 ? 'FREE' : '₹'+shippingFee} (${SHIPPING[selectedShipping].label})\nTotal: ₹${total}\n\n` +
-      `DELIVERY TO:\n${fields.name}\n${fields.phone} | ${fields.email}\n${fields.address}, ${fields.city}, ${fields.state} – ${fields.pincode}`;
 
-    const igUrl = `https://www.instagram.com/direct/t/shop.jersivo/?text=${encodeURIComponent(msg)}`;
+    const itemLines = cart.map(i =>
+      `• ${i.name} | Size: ${i.size} | Qty: ${i.qty} | ₹${i.price}`
+    ).join('\n');
 
+    const msg =
+`Hi! I'd like to place an order.
+
+Order No: ${orderNo}
+
+ITEMS:
+${itemLines}
+
+Subtotal: ₹${subtotal}
+Shipping: ${shippingFee === 0 ? 'FREE' : '₹'+shippingFee} (${SHIPPING[selectedShipping].label})
+Total: ₹${total}
+
+DELIVERY TO:
+${fields.name}
+${fields.phone} | ${fields.email}
+${fields.address}, ${fields.city}, ${fields.state} – ${fields.pincode}`;
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(msg);
+
+    // Clear cart
+    localStorage.removeItem('jersivo_cart');
+
+    // Show instruction popup
+    showToast('Details copied. Open Instagram, go to messages, and paste manually.');
+
+    // Delay before opening Instagram profile
+    setTimeout(() => {
+      window.open('https://www.instagram.com/shop.jersivo/', '_blank');
+      location.href = '/';
+    }, 3000);
+
+  } catch (err) {
+    showToast('Error creating order. Please try again.');
+    btn.textContent = 'Copy details and proceed to Instagram →';
+    btn.disabled = false;
+  }
+}
     // Clear cart
     localStorage.removeItem('jersivo_cart');
 
