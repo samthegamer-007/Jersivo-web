@@ -55,46 +55,51 @@ function renderCart() {
   const total = subtotal + shippingFee;
 
   container.innerHTML = `
-    <div class="cart-items" id="cart-items">
-      ${cart.map(item => cartItemHTML(item)).join('')}
+  <div class="cart-items" id="cart-items">
+    ${cart.map(item => cartItemHTML(item)).join('')}
+  </div>
+
+  <div class="checkout-box">
+    <p class="section-label">Delivery Details</p>
+
+    <div class="form-grid">
+      <div class="form-field"><label>Full Name *</label><input type="text" id="f-name" placeholder="Your name"/></div>
+      <div class="form-field"><label>Phone *</label><input type="tel" id="f-phone" placeholder="10-digit mobile"/></div>
+      <div class="form-field full"><label>Email *</label><input type="email" id="f-email" placeholder="email@example.com"/></div>
+      <div class="form-field full"><label>Address *</label><input type="text" id="f-address" placeholder="House/Flat no., Street, Area"/></div>
+      <div class="form-field"><label>City *</label><input type="text" id="f-city" placeholder="City"/></div>
+      <div class="form-field"><label>State *</label><input type="text" id="f-state" placeholder="State"/></div>
+      <div class="form-field"><label>Pincode *</label><input type="text" id="f-pincode" placeholder="6-digit pincode"/></div>
     </div>
-    <div class="checkout-box">
-      <p class="section-label">Delivery Details</p>
-      <div class="form-grid">
-        <div class="form-field"><label>Full Name *</label><input type="text" id="f-name" placeholder="Your name"/></div>
-        <div class="form-field"><label>Phone *</label><input type="tel" id="f-phone" placeholder="10-digit mobile"/></div>
-        <div class="form-field full"><label>Email *</label><input type="email" id="f-email" placeholder="email@example.com"/></div>
-        <div class="form-field full"><label>Address *</label><input type="text" id="f-address" placeholder="House/Flat no., Street, Area"/></div>
-        <div class="form-field"><label>City *</label><input type="text" id="f-city" placeholder="City"/></div>
-        <div class="form-field"><label>State *</label><input type="text" id="f-state" placeholder="State"/></div>
-        <div class="form-field"><label>Pincode *</label><input type="text" id="f-pincode" placeholder="6-digit pincode"/></div>
-      </div>
 
-      <p class="section-label">Shipping Method</p>
-      <div class="shipping-options" id="shipping-options">
-        ${Object.entries(SHIPPING).map(([key, cfg]) => {
-          const fee = getShippingFee(key, subtotal);
-          const feeLabel = fee === 0 ? '<span style="color:#04FBFF">FREE</span>' : `₹${fee}`;
-          return `
-          <label class="shipping-opt">
-            <input type="radio" name="shipping" value="${key}" ${key===selectedShipping?'checked':''}/>
-            <div class="shipping-opt-info">
-              <div class="shipping-opt-name">${cfg.label}${cfg.cod?' <span style="color:#f90;font-size:0.7rem">[COD]</span>':''}</div>
-              <div class="shipping-opt-desc">${cfg.desc}</div>
-            </div>
-            <span class="shipping-opt-price">${feeLabel}</span>
-          </label>`;
-        }).join('')}
-      </div>
+    <p class="section-label">Shipping Method</p>
+    <div class="shipping-options" id="shipping-options">
+      ${Object.entries(SHIPPING).map(([key, cfg]) => {
+        const fee = getShippingFee(key, subtotal);
+        const feeLabel = fee === 0 ? '<span style="color:#04FBFF">FREE</span>' : `₹${fee}`;
+        return `
+        <label class="shipping-opt">
+          <input type="radio" name="shipping" value="${key}" ${key===selectedShipping?'checked':''}/>
+          <div class="shipping-opt-info">
+            <div class="shipping-opt-name">${cfg.label}${cfg.cod?' <span style="color:#f90;font-size:0.7rem">[COD]</span>':''}</div>
+            <div class="shipping-opt-desc">${cfg.desc}</div>
+          </div>
+          <span class="shipping-opt-price">${feeLabel}</span>
+        </label>`;
+      }).join('')}
+    </div>
 
-      <div class="totals">
-        <div class="total-row"><span>Subtotal</span><span>₹${subtotal.toLocaleString('en-IN')}</span></div>
-        <div class="total-row"><span>Shipping</span><span id="shipping-fee-display">${shippingFee === 0 ? 'FREE' : '₹'+shippingFee}</span></div>
-        <div class="total-row grand"><span>Total</span><span id="total-display">₹${total.toLocaleString('en-IN')}</span></div>
-      </div>
+    <div class="totals">
+      <div class="total-row"><span>Subtotal</span><span>₹${subtotal.toLocaleString('en-IN')}</span></div>
+      <div class="total-row"><span>Shipping</span><span>${shippingFee === 0 ? 'FREE' : '₹'+shippingFee}</span></div>
+      <div class="total-row grand"><span>Total</span><span>₹${total.toLocaleString('en-IN')}</span></div>
+    </div>
 
-      <button class="proceed-btn" id="proceed-btn">Copy details and Proceed to Instagram →</button>
-    </div>`;
+    <button class="proceed-btn" id="proceed-btn">
+      Copy details and proceed to Instagram →
+    </button>
+  </div>
+`;
 
   // Qty buttons
   document.querySelectorAll('.qty-btn').forEach(btn => {
