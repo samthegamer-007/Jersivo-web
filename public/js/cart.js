@@ -6,7 +6,7 @@ const SHIPPING = {
   'delhivery_prepaid': { label: 'Delhivery Prepaid', desc: 'Reliable courier – Prepaid', cod: false, feeUnder: 55, feeFree: 0 },
   'delhivery_cod': { label: 'Delhivery COD', desc: 'Cash on Delivery – fee paid online', cod: true, feeUnder: 75, feeFree: 0 },
 };
-const FREE_THRESHOLD = 1100;
+const FREE_THRESHOLD = 1199;
 
 let selectedShipping = 'india_post';
 
