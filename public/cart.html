@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cart – Jersivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-dark: #0a0a0a;
+      --bg-card: #1a1a1a;
+      --text-light: #e5e5e5;
+      --text-gray: #999;
+      --border-dark: #2a2a2a;
+      --grad-start: #48A6FD;
+      --grad-end: #04FBFF;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg-dark); color: var(--text-light); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    /* Maintenance */
+    #maintenance-screen {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: #1c1c1c; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem;
+    }
+    #maintenance-screen h2 { font-family: 'Bebas Neue'; font-size: 2.5rem; color: #aaa; margin-bottom: 1rem; }
+    #maintenance-screen p { color: #666; }
+    #maintenance-screen a { color: #48A6FD; text-decoration: none; }
+
+    /* Navbar */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      background: #0a0a0a; border-bottom: 1px solid var(--border-dark);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.5rem; height: 60px;
+    }
+    .navbar-logo {
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.08em;
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      text-decoration: none;
+    }
+    .back-btn {
+      background: none; border: 1px solid var(--border-dark); border-radius: 6px;
+      color: var(--text-gray); font-family: 'DM Sans'; font-size: 0.82rem;
+      padding: 6px 14px; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .back-btn:hover { border-color: #555; color: var(--text-light); }
+
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+    .page-title { font-family: 'Bebas Neue'; font-size: 2rem; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
+
+    /* Empty state */
+    .empty-cart { text-align: center; padding: 4rem 1rem; color: var(--text-gray); }
+    .empty-cart h3 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-light); }
+    .empty-cart a {
+      display: inline-block; margin-top: 1.5rem;
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+      color: #000; font-weight: 700; font-size: 0.88rem;
+      padding: 10px 24px; border-radius: 8px; text-decoration: none;
+    }
+
+    /* Cart Items */
+    .cart-items { display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 2rem; }
+    .cart-item {
+      background: var(--bg-card); border: 1px solid var(--border-dark); border-radius: 10px;
+      display: flex; align-items: center; gap: 1rem; padding: 0.75rem;
+    }
+    .item-img { width: 70px; height: 90px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+    .item-details { flex: 1; min-width: 0; }
+    .item-name { font-size: 0.88rem; font-weight: 600; margin-bottom: 3px; }
+    .item-meta { font-size: 0.78rem; color: var(--text-gray); margin-bottom: 6px; }
+    .item-price {
+      font-size: 0.92rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+    .qty-controls { display: flex; align-items: center; gap: 0; }
+    .qty-btn {
+      background: #111; border: 1px solid var(--border-dark); color: var(--text-light);
+      width: 28px; height: 28px; cursor: pointer; font-size: 1rem; font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .qty-btn:first-child { border-radius: 6px 0 0 6px; }
+    .qty-btn:last-child { border-radius: 0 6px 6px 0; }
+    .qty-btn:hover { background: #222; }
+    .qty-display {
+      background: #111; border-top: 1px solid var(--border-dark); border-bottom: 1px solid var(--border-dark);
+      width: 36px; height: 28px; text-align: center; line-height: 28px;
+      font-size: 0.85rem; color: var(--text-light);
+    }
+    .remove-btn {
+      background: none; border: none; color: #555; font-size: 0.75rem; cursor: pointer;
+      font-family: 'DM Sans'; text-decoration: underline; transition: color 0.15s;
+    }
+    .remove-btn:hover { color: #e55; }
+
+    /* Summary + Form */
+    .checkout-box {
+      background: var(--bg-card); border: 1px solid var(--border-dark); border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .section-label {
+      font-family: 'Bebas Neue'; font-size: 1.3rem; letter-spacing: 0.05em;
+      margin-bottom: 1.2rem; color: var(--text-light);
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; margin-bottom: 1.5rem; }
+    @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-field label { font-size: 0.75rem; color: var(--text-gray); letter-spacing: 0.03em; }
+    .form-field input {
+      background: #111; border: 1px solid var(--border-dark);
+      color: var(--text-light); font-family: 'DM Sans'; font-size: 0.88rem;
+      padding: 9px 12px; border-radius: 7px; outline: none; transition: border-color 0.2s;
+    }
+    .form-field input:focus { border-color: var(--grad-start); }
+    .form-field input::placeholder { color: #444; }
+
+    /* Shipping options */
+    .shipping-options { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+    .shipping-opt {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: #111; border: 1px solid var(--border-dark); border-radius: 8px;
+      padding: 10px 12px; cursor: pointer; transition: border-color 0.2s;
+    }
+    .shipping-opt:has(input:checked) { border-color: var(--grad-start); }
+    .shipping-opt input[type="radio"] { accent-color: var(--grad-start); margin-top: 2px; flex-shrink: 0; }
+    .shipping-opt-info { flex: 1; }
+    .shipping-opt-name { font-size: 0.85rem; font-weight: 600; color: var(--text-light); }
+    .shipping-opt-desc { font-size: 0.75rem; color: var(--text-gray); margin-top: 2px; }
+    .shipping-opt-price { font-size: 0.85rem; font-weight: 700; color: var(--grad-start); white-space: nowrap; margin-left: auto; align-self: center; }
+
+    /* Totals */
+    .totals { border-top: 1px solid var(--border-dark); padding-top: 1rem; margin-bottom: 1.5rem; }
+    .total-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; color: var(--text-gray); }
+    .total-row.grand { font-size: 1rem; font-weight: 700; color: var(--text-light); padding-top: 8px; border-top: 1px solid var(--border-dark); margin-top: 4px; }
+
+    .proceed-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+      border: none; border-radius: 9px;
+      color: #000; font-family: 'DM Sans'; font-size: 0.95rem; font-weight: 700;
+      letter-spacing: 0.04em; cursor: pointer; transition: opacity 0.15s, transform 0.15s;
+    }
+    .proceed-btn:hover { opacity: 0.9; }
+    .proceed-btn:active { transform: scale(0.99); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: #1a1a1a; border: 1px solid #333;
+      color: var(--text-light); padding: 10px 20px; border-radius: 8px;
+      font-size: 0.85rem; z-index: 200; transition: transform 0.3s ease; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div id="maintenance-screen">
+  <h2>Under Maintenance</h2>
+  <p>Website is under maintenance, please contact the <a href="https://instagram.com/_sambitgope" target="_blank">admin</a> if you're seeing this for more than 24 hours.</p>
+</div>
+
+<nav class="navbar">
+  <a href="/" class="navbar-logo">JERSIVO</a>
+  <button class="back-btn" onclick="location.href='/'">← Continue Shopping</button>
+</nav>
+
+<div class="page-wrap">
+  <h1 class="page-title">Your Cart</h1>
+
+  <div id="cart-content">
+    <!-- Populated by JS -->
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/cart.js"></script>
+</body>
+</html>

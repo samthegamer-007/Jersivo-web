@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard – Jersivo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0a; --bg-card: #1a1a1a; --bg-input: #111;
+      --text: #e5e5e5; --text-gray: #777; --border: #2a2a2a;
+      --grad-start: #48A6FD; --grad-end: #04FBFF;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar {
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.5rem; height: 60px; position: sticky; top: 0; z-index: 50;
+    }
+    .logo {
+      font-family: 'Bebas Neue'; font-size: 1.7rem; letter-spacing: 0.08em;
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+    .logout-btn {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-gray); font-family: 'DM Sans'; font-size: 0.8rem;
+      padding: 5px 12px; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .logout-btn:hover { border-color: #555; color: var(--text); }
+
+    /* Kill Switch */
+    .killswitch-bar {
+      background: #111; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+    }
+    .ks-label { font-size: 0.82rem; color: var(--text-gray); }
+    .ks-label span { color: var(--text); font-weight: 600; }
+    .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+    .toggle { position: relative; display: inline-block; width: 46px; height: 24px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #333; border-radius: 24px;
+      cursor: pointer; transition: background 0.25s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      left: 3px; top: 3px; background: #666; border-radius: 50%;
+      transition: transform 0.25s, background 0.25s;
+    }
+    .toggle input:checked + .toggle-slider { background: #e44; }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(22px); background: #fff; }
+    .toggle-text { font-size: 0.78rem; color: var(--text-gray); }
+
+    /* Tabs */
+    .tabs-bar {
+      display: flex; border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem; background: var(--bg);
+    }
+    .tab-btn {
+      background: none; border: none; border-bottom: 2px solid transparent;
+      color: var(--text-gray); font-family: 'DM Sans'; font-size: 0.88rem; font-weight: 500;
+      padding: 0.85rem 1.2rem; cursor: pointer; margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--grad-start); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    /* Panels */
+    .panel { display: none; padding: 1.5rem; max-width: 900px; margin: 0 auto; }
+    .panel.active { display: block; }
+
+    /* Form styles */
+    .panel-title { font-family: 'Bebas Neue'; font-size: 1.6rem; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 0.75rem; color: var(--text-gray); letter-spacing: 0.03em; }
+    .field input, .field select {
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans'; font-size: 0.88rem;
+      padding: 9px 12px; border-radius: 7px; outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--grad-start); }
+    .field select option { background: #1a1a1a; }
+    .multi-select { height: 120px; }
+    .sku-preview {
+      font-size: 0.78rem; color: var(--text-gray); font-family: monospace;
+      padding: 8px 12px; background: #0d0d0d; border: 1px solid var(--border);
+      border-radius: 7px; letter-spacing: 0.06em;
+    }
+    .submit-btn {
+      margin-top: 1.5rem; padding: 11px 28px;
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+      border: none; border-radius: 8px;
+      color: #000; font-family: 'DM Sans'; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .submit-btn:hover { opacity: 0.88; }
+    .cancel-btn {
+      margin-top: 1.5rem; margin-left: 0.75rem; padding: 11px 20px;
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-gray); font-family: 'DM Sans'; font-size: 0.9rem;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .cancel-btn:hover { border-color: #555; color: var(--text); }
+
+    /* Product List */
+    .list-controls {
+      display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;
+      margin-bottom: 1.2rem;
+    }
+    .list-controls select {
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans'; font-size: 0.82rem;
+      padding: 6px 10px; border-radius: 6px; outline: none;
+    }
+    .search-input {
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans'; font-size: 0.82rem;
+      padding: 6px 12px; border-radius: 6px; outline: none; flex: 1; min-width: 160px;
+    }
+    .search-input:focus { border-color: var(--grad-start); }
+
+    .products-list { display: flex; flex-direction: column; gap: 0.65rem; }
+    .product-row {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+      display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem;
+    }
+    .product-row.deleted { opacity: 0.4; }
+    .prod-img { width: 52px; height: 66px; object-fit: cover; border-radius: 5px; flex-shrink: 0; background: #111; }
+    .prod-info { flex: 1; min-width: 0; }
+    .prod-name { font-size: 0.88rem; font-weight: 600; }
+    .prod-meta { font-size: 0.75rem; color: var(--text-gray); margin-top: 2px; }
+    .prod-sku { font-family: monospace; font-size: 0.72rem; color: #555; }
+    .prod-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+    .edit-btn, .del-btn {
+      padding: 5px 12px; border-radius: 6px; font-family: 'DM Sans';
+      font-size: 0.78rem; font-weight: 600; cursor: pointer; border: 1px solid;
+      transition: opacity 0.15s;
+    }
+    .edit-btn { border-color: #48A6FD; color: #48A6FD; background: none; }
+    .edit-btn:hover { background: rgba(72,166,253,0.1); }
+    .del-btn { border-color: #e44; color: #e44; background: none; }
+    .del-btn:hover { background: rgba(238,68,68,0.1); }
+    .del-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+    }
+    .badge-live { background: rgba(4,251,255,0.12); color: #04FBFF; }
+    .badge-deleted { background: rgba(200,50,50,0.15); color: #e55; }
+
+    /* Loading spinner */
+    .spinner {
+      width: 30px; height: 30px; border: 2px solid #222;
+      border-top-color: var(--grad-start); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 2rem auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .msg { text-align: center; padding: 1rem; color: var(--text-gray); font-size: 0.85rem; }
+    .msg.success { color: #04FBFF; }
+    .msg.error { color: #e55; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="logo">JERSIVO ADMIN</span>
+  <div class="nav-right">
+    <button class="logout-btn" id="logout-btn">Logout</button>
+  </div>
+</nav>
+
+<!-- Kill Switch Bar -->
+<div class="killswitch-bar">
+  <span class="ks-label">Website Status: <span id="ks-status-text">Loading...</span></span>
+  <div class="toggle-wrap">
+    <span class="toggle-text">Maintenance Mode</span>
+    <label class="toggle">
+      <input type="checkbox" id="ks-toggle"/>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs-bar">
+  <button class="tab-btn active" data-tab="add">Add Product</button>
+  <button class="tab-btn" data-tab="view">View Products</button>
+</div>
+
+<!-- Add Product Panel -->
+<div class="panel active" id="panel-add">
+  <h2 class="panel-title" id="form-title">Add Product</h2>
+  <div class="form-grid">
+    <div class="field full">
+      <label>Product Name</label>
+      <input type="text" id="f-name" placeholder="e.g. FC Barcelona Home 2024/25"/>
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <select id="f-category">
+        <option value="">Select category</option>
+        <option value="Club Jersey">Club Jersey</option>
+        <option value="Retro Club Jersey">Retro Club Jersey</option>
+        <option value="National Team Jersey">National Team Jersey</option>
+        <option value="Retro National Team Jersey">Retro National Team Jersey</option>
+        <option value="Special Edition Jersey">Special Edition Jersey</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Team</label>
+      <select id="f-team" disabled>
+        <option value="">Select category first</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Price (₹)</label>
+      <input type="number" id="f-price" placeholder="e.g. 1299"/>
+    </div>
+    <div class="field">
+      <label>SKU Preview</label>
+      <div class="sku-preview" id="sku-preview">—</div>
+    </div>
+    <div class="field full">
+      <label>Image 1 URL (Primary)</label>
+      <input type="url" id="f-image1" placeholder="https://..."/>
+    </div>
+    <div class="field full">
+      <label>Image 2 URL (Secondary / Flip)</label>
+      <input type="url" id="f-image2" placeholder="https://..."/>
+    </div>
+    <div class="field full">
+      <label>Available Sizes (hold Ctrl/Cmd for multiple)</label>
+      <select id="f-sizes" multiple class="multi-select">
+        <option value="XS">XS</option>
+        <option value="S">S</option>
+        <option value="M">M</option>
+        <option value="L">L</option>
+        <option value="XL">XL</option>
+        <option value="XXL">XXL</option>
+      </select>
+    </div>
+  </div>
+  <div id="form-msg" class="msg"></div>
+  <button class="submit-btn" id="submit-btn">Add Product</button>
+  <button class="cancel-btn" id="cancel-edit-btn" style="display:none">Cancel Edit</button>
+</div>
+
+<!-- View Products Panel -->
+<div class="panel" id="panel-view">
+  <h2 class="panel-title">All Products</h2>
+  <div class="list-controls">
+    <input class="search-input" id="search-input" placeholder="Search name or SKU..."/>
+    <select id="filter-cat">
+      <option value="">All Categories</option>
+      <option value="Club Jersey">Club Jersey</option>
+      <option value="Retro Club Jersey">Retro Club Jersey</option>
+      <option value="National Team Jersey">National Team Jersey</option>
+      <option value="Retro National Team Jersey">Retro National Team Jersey</option>
+      <option value="Special Edition Jersey">Special Edition Jersey</option>
+    </select>
+    <select id="filter-status">
+      <option value="">All Status</option>
+      <option value="LIVE">Live</option>
+      <option value="DELETED">Deleted</option>
+    </select>
+  </div>
+  <div id="products-list">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>
